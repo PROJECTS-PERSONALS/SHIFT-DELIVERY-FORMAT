@@ -1,0 +1,164 @@
+<!-- ENTREGA DE TURNO ESTRUCTURA -->
+<!DOCTYPE html>
+<html lang="es">
+	<head>
+		<meta charset="UTF-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<title> Entrega de Turno 24H </title>
+		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+		<link rel="preconnect" href="https://fonts.googleapis.com">
+		<!-- Fuentes: carga no bloqueante para mejorar tiempo de renderizado -->
+		<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Source+Sans+3:wght@300;400;500;600;700&display=swap" media="print" onload="this.media='all'">
+		<noscript>
+			<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Source+Sans+3:wght@300;400;500;600;700&display=swap">
+		</noscript>
+		<link rel="stylesheet" href="./styles.css">
+		<!-- Script con defer -->
+		<script src="./script.js" defer> </script>
+	</head>
+	<body>
+		<div class="page-wrapper">
+			<main class="documento" id="documento">
+				<!-- HEADER -->
+				<header class="doc-header">
+					<!-- LOGO 24H FIJO -->
+					<div class="logo-zone logo-zone--static" aria-label="Logo 24H">
+						<div class="logo-24h" id="logo24h">
+							<svg viewBox="0 0 160 80" xmlns="http://www.w3.org/2000/svg" width="86" height="48" aria-hidden="true">
+								<defs>
+									<linearGradient id="lg2" x1="0" y1="0" x2="0" y2="1"> <stop offset="0%" stop-color="#1a6fc4"/> <stop offset="100%" stop-color="#0a3a7a"/> </linearGradient>
+									<linearGradient id="lg4" x1="0" y1="0" x2="0" y2="1"> <stop offset="0%" stop-color="#2589e0"/> <stop offset="100%" stop-color="#0d52a4"/> </linearGradient>
+									<linearGradient id="lgh" x1="0" y1="0" x2="0" y2="1"> <stop offset="0%" stop-color="#c8cdd6"/> <stop offset="100%" stop-color="#8a8f9a"/> </linearGradient>
+								</defs>
+								<text x="4" y="68" class="logo-glyph" fill="url(#lg2)"> 2 </text>
+								<text x="54" y="68" class="logo-glyph" fill="url(#lg4)"> 4 </text>
+								<text x="108" y="68" class="logo-glyph" fill="url(#lgh)"> h </text>
+							</svg>
+						</div>
+					</div>
+					<!-- TÍTULO + TURNO pill/select -->
+					<div style="flex:1; text-align:center;">
+						<div style="font-size:17px; font-weight:700; letter-spacing:3px; color:#fff; line-height:1;"> ENTREGA DE TURNO </div>
+						<div style="margin-top:5px; display:flex; align-items:center; justify-content:center; gap:8px;">
+							<span style="font-size:10px; color:rgba(255, 255, 255, 0.801); text-transform:uppercase; letter-spacing:.8px;"> Turno: </span>
+							<div class="turno-selector-wrap">
+								<div class="turno-pill" id="turnoPill"> 6:00 am - 2:00 pm </div>
+								<select id="turnoSelect" class="turno-select" aria-label="Seleccionar turno">
+									<option value="6:00 am - 2:00 pm"> 6:00 am - 2:00 pm </option>
+									<option value="2:00 pm - 10:00 pm"> 2:00 pm - 10:00 pm </option>
+									<option value="10:00 pm - 6:00 am"> 10:00 pm - 6:00 am </option>
+								</select>
+							</div>
+						</div>
+					</div>
+					<div class="header-right-spacer" aria-hidden="true"> </div>
+				</header>
+				<!-- BARRA FECHA / CIUDAD -->
+				<div class="fecha-bar" role="region" aria-label="Fecha y ciudad">
+					<div class="fecha-bar-inner">
+						<div class="fecha-field">
+							<label for="ciudadInput"> Ciudad </label>
+							<input type="text" id="ciudadInput" value="Medellín" maxlength="60" autocomplete="off">
+						</div>
+						<!-- <span class="fecha-sep" aria-hidden="true"> , </span> -->
+						<div class="fecha-field fecha-field--date">
+							<label for="fechaInput"> Fecha </label>
+							<div class="fecha-date-wrap"> <input type="date" id="fechaInput"> </div>
+						</div>
+					</div>
+				</div>
+				<!-- SECCIÓN TAREAS REALIZADAS -->
+				<section class="seccion" id="secTareas" aria-labelledby="hTareasRealizadas">
+					<div class="seccion-header"> <h2 id="hTareasRealizadas"> TAREAS REALIZADAS </h2> </div>
+					<div class="tabla-cols" id="tablaColsTareas" role="row" aria-hidden="true">
+						<div class="col-turno"> Turno </div>
+						<div class="col-ticket"> Ticket / Caso </div>
+						<div class="col-desc"> Descripción de la tarea </div>
+						<div class="col-acciones"> Acciones </div>
+					</div>
+					<div id="listaTareas" role="list"> </div>
+					<div class="btn-agregar-wrap">
+						<button class="btn-agregar" id="btnAgregarTarea" type="button">
+							<svg viewBox="0 0 20 20" fill="none" aria-hidden="true">
+								<circle cx="10" cy="10" r="9" stroke="currentColor" stroke-width="1.6"/>
+								<line x1="10" y1="6" x2="10" y2="14" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+								<line x1="6" y1="10" x2="14" y2="10" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+							</svg>
+							Agregar Tarea
+						</button>
+					</div>
+				</section>
+				<!-- SECCIÓN TAREAS PENDIENTES -->
+				<section class="seccion" id="secPendientes" aria-labelledby="hTareasPendientes">
+					<div class="seccion-header seccion-header--pendientes"> <h2 id="hTareasPendientes"> TAREAS PENDIENTES </h2> </div>
+					<div class="tabla-cols tabla-cols--pend" id="tablaColsPend" role="row" aria-hidden="true">
+						<div class="col-ticket"> Ticket / Caso </div>
+						<div class="col-desc"> Descripción del pendiente </div>
+						<div class="col-motivo"> Motivo por el que queda pendiente </div>
+						<div class="col-acciones"> Acciones </div>
+					</div>
+					<div id="listaPendientes" role="list"> </div>
+					<div class="btn-agregar-wrap">
+						<button class="btn-agregar btn-agregar--pend" id="btnAgregarPendiente" type="button">
+							<svg viewBox="0 0 20 20" fill="none" aria-hidden="true">
+								<circle cx="10" cy="10" r="9" stroke="currentColor" stroke-width="1.6"/>
+								<line x1="10" y1="6" x2="10" y2="14" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+								<line x1="6" y1="10" x2="14" y2="10" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+							</svg>
+							Agregar Pendiente
+						</button>
+					</div>
+				</section>
+				<!-- SECCIÓN RESPONSABLES / FIRMAS -->
+				<section class="seccion" id="secFirmas" aria-labelledby="hFirmas">
+					<div class="seccion-titulo"> <h2 id="hFirmas"> RESPONSABLES </h2> </div>
+					<div class="firmas-grid">
+						<div class="firma-bloque">
+							<div class="firma-titulo"> Empleado Saliente </div>
+							<div class="campo-firma">
+								<label for="salienteNombre"> Nombre completo </label>
+								<input type="text" id="salienteNombre" placeholder="Nombre completo..." autocomplete="off">
+							</div>
+							<div class="campo-firma">
+								<label for="salienteDNI"> DNI / Cédula </label>
+								<input type="text" id="salienteDNI" placeholder="N° de identificación..." autocomplete="off">
+							</div>
+							<div class="linea-firma" aria-hidden="true"> </div>
+						</div>
+						<div class="firma-bloque">
+							<div class="firma-titulo"> Empleado Entrante </div>
+							<div class="campo-firma">
+								<label for="entranteNombre"> Nombre completo </label>
+								<input type="text" id="entranteNombre" placeholder="Nombre completo..." autocomplete="off">
+							</div>
+							<div class="campo-firma">
+								<label for="estranteDNI"> DNI / Cédula </label>
+								<input type="text" id="estranteDNI" placeholder="N° de identificación..." autocomplete="off">
+							</div>
+							<div class="linea-firma" aria-hidden="true"> </div>
+						</div>
+					</div>
+				</section>
+				<!-- FOOTER -->
+				<footer class="doc-footer">
+					<span> Documento generado digitalmente | Sistema de Entrega de Turno </span>
+					<span id="footerFecha"> </span>
+				</footer>
+			</main>
+		</div> <!-- /page-wrapper -->
+		<!-- BARRA DE ACCIONES STICKY -->
+		<div class="action-bar" id="actionBar" role="toolbar" aria-label="Acciones del documento">
+			<button class="btn-clear" id="btnClear" type="button" title="Reiniciar todo el formulario"> Limpiar </button>
+			<button class="btn-print" id="btnPrint" type="button">
+				<svg viewBox="0 0 20 20" fill="none" aria-hidden="true">
+					<rect x="4" y="2" width="12" height="9" rx="1" stroke="currentColor" stroke-width="1.6"/>
+					<path d="M4 8H2a1 1 0 00-1 1v6a1 1 0 001 1h2" stroke="currentColor" stroke-width="1.6"/>
+					<path d="M16 8h2a1 1 0 011 1v6a1 1 0 01-1 1h-2" stroke="currentColor" stroke-width="1.6"/>
+					<rect x="4" y="12" width="12" height="6" rx="1" stroke="currentColor" stroke-width="1.6"/>
+					<circle cx="15" cy="10.5" r="1" fill="currentColor"/>
+				</svg>
+				Imprimir
+			</button>
+		</div>
+	</body>
+</html>
