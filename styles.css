@@ -74,8 +74,15 @@ body {
     padding: var(--sp-8) var(--sp-4) 90px;
 }
 
-/* CONTENEDOR PÁGINA */
-.page-wrapper { max-width: 960px; margin: 0 auto; }
+/* CONTENEDOR PÁGINA — layout 3 columnas: sidebar | documento | sidebar */
+.page-wrapper {
+    gap: 16px;
+    display: grid;
+    margin: 0 auto;
+    align-items: start;
+    max-width: 1440px;
+    grid-template-columns: 220px minmax(0, 960px) 220px;
+}
 
 /* DOCUMENTO PRINCIPAL */
 .documento {
@@ -96,7 +103,8 @@ body {
 .doc-header {
     display: flex;
     gap: var(--sp-4);
-    padding: 14px 20px;
+    margin-left: -60px;
+    padding: 14px 70px;
     align-items: center;
     background: var(--c-header);
     justify-content: space-between;
@@ -887,46 +895,735 @@ body {
     .firmas-grid { gap: var(--sp-5); padding: var(--sp-4); grid-template-columns: 1fr; }
 }
 
+
+/* ══════════════════════════════════════════════════════════════
+   SIDEBARS EXTERNOS DE ACTIVIDADES
+   Cada sidebar es completamente independiente:
+   — su propia variable de alto máximo
+   — su propio scroll interno
+   — sin dependencia mutua de tamaño
+   Viven fuera del main.documento — no se imprimen nunca.
+   ══════════════════════════════════════════════════════════════ */
+
+/* Variables individuales de cada sidebar.
+   Modificar aquí para ajustar la altura de cada panel de forma independiente. */
+:root {
+    --sidebar-oblig-max-h: calc(100vh - 120px); /* alto máximo panel obligatorias */
+    --sidebar-opc-max-h:   calc(100vh - 120px); /* alto máximo panel opcionales   */
+    --sidebar-width:       220px;                /* ancho compartido (editable)     */
+}
+
+/* Base compartida — solo layout y apariencia común */
+.act-sidebar {
+    top: 16px;
+    position: sticky;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    width: var(--sidebar-width);
+    border-radius: var(--r-lg);
+    background: var(--blanco);
+    border: 1px solid var(--azul-200);
+    box-shadow: var(--shadow-lg);
+    /* max-height se sobreescribe individualmente abajo */
+}
+
+/* ── Altura independiente por sidebar ── */
+.act-sidebar--oblig {
+    max-height: var(--sidebar-oblig-max-h);
+}
+
+.act-sidebar--opc {
+    max-height: var(--sidebar-opc-max-h);
+}
+
+/* Cabecera del sidebar — Obligatorias */
+.act-sidebar-header {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    padding: 9px 12px;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--blanco);
+    flex-shrink: 0;
+    flex-wrap: wrap;
+}
+
+.act-sidebar-header--oblig {
+    background: linear-gradient(90deg, #1b3f7a 0%, #1e5aab 100%);
+    border-bottom: 2px solid var(--c-acento);
+}
+
+.act-sidebar-header--opc {
+    background: linear-gradient(90deg, var(--c-seccion-2a) 0%, #163264 100%);
+    border-bottom: 2px solid #1e4a88;
+}
+
+.act-sidebar-header .seccion-icon {
+    width: 14px;
+    height: 14px;
+    flex-shrink: 0;
+    opacity: .85;
+}
+
+/* Tabla dentro del sidebar — scroll si supera la altura */
+.act-sidebar .act-tabla {
+    flex: 1;
+    display: block;
+    /* scroll gestionado por cada .act-sidebar--* en el tbody */
+}
+
+.act-sidebar .act-tabla thead { display: table; width: 100%; table-layout: fixed; }
+/* Scroll independiente para obligatorias */
+.act-sidebar--oblig .act-tabla tbody {
+    display: block;
+    overflow-y: auto;
+    max-height: calc(var(--sidebar-oblig-max-h) - 130px);
+}
+
+/* Scroll independiente para opcionales */
+.act-sidebar--opc .act-tabla tbody {
+    display: block;
+    overflow-y: auto;
+    max-height: calc(var(--sidebar-opc-max-h) - 80px);
+}
+.act-sidebar .act-tabla tr    { display: table; width: 100%; table-layout: fixed; }
+
+/* Aviso turno dentro del sidebar */
+.act-sidebar .act-aviso-turno {
+    display: flex;
+    align-items: flex-start;
+    gap: 7px;
+    padding: 10px 12px;
+    font-size: 11px;
+    color: var(--azul-700);
+    background: var(--azul-50);
+    border-bottom: 1px dashed var(--azul-200);
+    flex-shrink: 0;
+}
+
+/* Badge del turno en el header del sidebar */
+.act-sidebar .act-turno-badge {
+    font-size: 9px;
+    font-weight: 500;
+    letter-spacing: .3px;
+    text-transform: none;
+    color: rgba(255,255,255,.7);
+    background: rgba(255,255,255,.12);
+    border: 1px solid rgba(255,255,255,.2);
+    border-radius: 20px;
+    padding: 1px 7px;
+    white-space: nowrap;
+    margin-left: auto;
+    margin-top: 2px;
+}
+
+/* Cabeceras de columna de la tabla */
+.act-sidebar .act-tabla thead th {
+    padding: 5px 6px;
+    font-size: 8.5px;
+    font-weight: 700;
+    letter-spacing: .6px;
+    text-transform: uppercase;
+    color: var(--azul-700);
+    background: var(--azul-50);
+    border-bottom: 1.5px solid var(--azul-200);
+    text-align: left;
+    white-space: nowrap;
+}
+
+.act-sidebar .act-tabla thead th.act-col-accion { text-align: center; }
+
+/* Filas de actividades en sidebar */
+.act-sidebar .act-fila {
+    border-bottom: 1px solid #eef1f8;
+    transition: background .12s;
+}
+.act-sidebar .act-fila:last-child { border-bottom: none; }
+.act-sidebar .act-fila:hover { background: #f4f8ff; }
+
+.act-sidebar .act-fila td {
+    padding: 6px 6px;
+    vertical-align: top;
+    font-size: 11.5px;
+}
+.act-sidebar .act-fila td.act-col-letra { vertical-align: middle; text-align: center; }
+.act-sidebar .act-fila td.act-col-accion { vertical-align: middle; text-align: center; }
+
+/* Badge de letra en sidebar */
+.act-sidebar .act-letra-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    font-size: 10px;
+    font-weight: 700;
+    flex-shrink: 0;
+}
+
+/* Nombre de la actividad en sidebar */
+.act-sidebar .act-nombre {
+    display: block;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--gris-900);
+    cursor: pointer;
+    line-height: 1.35;
+    transition: color .12s;
+}
+.act-sidebar .act-nombre:hover { color: var(--azul-700); text-decoration: underline; }
+
+/* Vista previa de descripción — oculta en sidebar para ahorrar espacio */
+.act-sidebar .act-desc-preview { display: none; }
+
+/* Botón "+" en sidebar */
+.act-sidebar .btn-act-agregar {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    padding: 0;
+    font-size: 16px;
+    font-weight: 700;
+    line-height: 1;
+    font-family: var(--font-body);
+    cursor: pointer;
+    color: var(--azul-700);
+    background: var(--azul-50);
+    border: 1px solid var(--azul-200);
+    border-radius: var(--r-sm);
+    transition: background .12s, border-color .12s, transform .1s;
+}
+.act-sidebar .btn-act-agregar:hover {
+    background: var(--azul-100);
+    border-color: var(--azul-500);
+    color: var(--azul-800);
+}
+.act-sidebar .btn-act-agregar:active { transform: scale(.92); }
+.act-sidebar .btn-act-agregar svg { display: none; } /* mostrar solo el "+" del texto */
+
+/* Columnas de ancho en sidebar */
+.act-sidebar .act-col-letra  { width: 28px; }
+.act-sidebar .act-col-accion { width: 30px; }
+
+/* Feedback: botón recién pulsado */
+.act-sidebar .btn-act-agregado {
+    background: #d1fae5 !important;
+    border-color: #34d399 !important;
+    color: #065f46 !important;
+}
+
+/* ── Paneles ───────────────────────────────────────────────── */
+.act-panel {
+    border-bottom: none;
+    border-right: 1px solid var(--azul-200);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+.act-panel:last-child { border-right: none; }
+
+/* ── Cabecera del panel ────────────────────────────────────── */
+.act-panel-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 18px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: #fff;
+}
+
+.act-panel-header--oblig {
+    background: linear-gradient(90deg, #1b3f7a 0%, #1e5aab 100%);
+    border-bottom: 2px solid #2563c4;
+}
+
+.act-panel-header--opc {
+    background: linear-gradient(90deg, #0d1b3e 0%, #163264 100%);
+    border-bottom: 2px solid #1e4a88;
+}
+
+.act-panel-header .seccion-icon {
+    width: 16px;
+    height: 16px;
+    opacity: .85;
+    flex-shrink: 0;
+}
+
+/* Badge del turno activo en el header */
+.act-turno-badge {
+    margin-left: auto;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: .5px;
+    text-transform: none;
+    color: rgba(255,255,255,.65);
+    background: rgba(255,255,255,.1);
+    border: 1px solid rgba(255,255,255,.2);
+    border-radius: 20px;
+    padding: 2px 10px;
+    white-space: nowrap;
+}
+
+.act-sub-badge {
+    margin-left: auto;
+    font-size: 10px;
+    font-weight: 400;
+    letter-spacing: .3px;
+    text-transform: none;
+    color: rgba(255,255,255,.55);
+    font-style: italic;
+}
+
+/* ── Aviso "selecciona turno" ──────────────────────────────── */
+.act-aviso-turno {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 18px;
+    font-size: 12px;
+    color: var(--azul-700);
+    background: #EDF2FB;
+    border-bottom: 1px dashed var(--azul-200);
+}
+.act-aviso-turno svg { color: var(--azul-500); }
+
+/* ── Tabla de actividades ─────────────────────────────────── */
+.act-tabla {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12.5px;
+}
+
+.act-tabla thead th {
+    padding: 6px 12px;
+    font-size: 9.5px;
+    font-weight: 700;
+    letter-spacing: .7px;
+    text-transform: uppercase;
+    color: var(--azul-700);
+    background: var(--azul-50);
+    border-bottom: 1.5px solid var(--azul-200);
+    text-align: left;
+}
+
+.act-tabla thead th.act-col-accion { text-align: center; }
+
+/* ── Columnas ─────────────────────────────────────────────── */
+.act-col-letra  { width: 48px;  text-align: center; padding: 0 6px; }
+.act-col-nombre { padding: 0 8px; }
+.act-col-accion { width: 96px;  text-align: center; }
+
+/* ── Filas ────────────────────────────────────────────────── */
+.act-fila {
+    border-bottom: 1px solid #eef1f8;
+    transition: background .12s;
+    cursor: default;
+}
+.act-fila:last-child { border-bottom: none; }
+.act-fila:hover { background: #f4f8ff; }
+
+.act-fila td {
+    padding: 8px 12px;
+    vertical-align: middle;
+}
+.act-fila td.act-col-letra { vertical-align: middle; text-align: center; }
+
+/* Badge de letra (A, B, C…) */
+.act-letra-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    font-size: 11px;
+    font-weight: 700;
+    flex-shrink: 0;
+}
+.act-letra-badge--obligatoria {
+    color: #fff;
+    background: var(--azul-600, #2563c4);
+}
+.act-letra-badge--opcional {
+    color: var(--azul-700);
+    background: var(--azul-100, #dbeafe);
+    border: 1px solid var(--azul-300, #93c5fd);
+}
+
+/* Nombre de la actividad */
+.act-nombre {
+    display: block;
+    font-weight: 600;
+    color: var(--gris-900);
+    cursor: pointer;
+    transition: color .12s;
+}
+.act-nombre:hover { color: var(--azul-700); text-decoration: underline; }
+
+/* Resumen breve de la descripción */
+.act-desc-preview {
+    display: block;
+    margin-top: 2px;
+    font-size: 11px;
+    color: var(--gris-400);
+    line-height: 1.4;
+    font-style: italic;
+}
+
+/* ── Botón "Agregar" ─────────────────────────────────────── */
+.btn-act-agregar {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    padding: 5px 12px;
+    font-size: 11px;
+    font-weight: 600;
+    font-family: var(--font-body);
+    cursor: pointer;
+    white-space: nowrap;
+    color: var(--azul-700);
+    background: var(--azul-50);
+    border: 1px solid var(--azul-300, #93c5fd);
+    border-radius: var(--r-sm);
+    transition: background .12s, border-color .12s, transform .1s, color .12s;
+}
+.btn-act-agregar:hover {
+    background: var(--azul-100);
+    border-color: var(--azul-500);
+    color: var(--azul-800);
+}
+.btn-act-agregar:active { transform: scale(.96); }
+
+/* Estado: recién agregado */
+.btn-act-agregado {
+    background: #d1fae5 !important;
+    border-color: #34d399 !important;
+    color: #065f46 !important;
+}
+
+/* ── Popup de descripción completa ───────────────────────── */
+.act-desc-popup {
+    position: fixed;
+    bottom: 80px;        /* encima de la action-bar */
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 9999;
+    width: min(520px, 90vw);
+    background: #fff;
+    border: 1px solid var(--azul-200);
+    border-radius: 8px;
+    box-shadow: 0 8px 32px rgba(13,27,62,.18), 0 2px 8px rgba(13,27,62,.10);
+    animation: actPopupIn .18s ease;
+    overflow: hidden;
+}
+
+@keyframes actPopupIn {
+    from { opacity: 0; transform: translateX(-50%) translateY(10px); }
+    to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+.act-desc-popup-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 14px;
+    background: var(--azul-800, #1e4888);
+    color: #fff;
+    font-size: 12px;
+    gap: 10px;
+}
+
+.act-desc-popup-close {
+    background: none;
+    border: none;
+    color: rgba(255,255,255,.7);
+    cursor: pointer;
+    font-size: 14px;
+    padding: 0 2px;
+    line-height: 1;
+    transition: color .1s;
+    font-family: var(--font-body);
+}
+.act-desc-popup-close:hover { color: #fff; }
+
+.act-desc-popup-body {
+    padding: 12px 14px;
+    font-size: 12.5px;
+    line-height: 1.6;
+    color: var(--gris-800);
+    margin: 0;
+}
+
+.act-desc-popup-footer {
+    padding: 8px 14px 12px;
+    display: flex;
+    justify-content: flex-end;
+    border-top: 1px solid var(--azul-100);
+}
+
+/* Botón "Usar esta descripción" dentro del popup */
+.btn-act-usar {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 6px 14px;
+    font-size: 11.5px;
+    font-weight: 600;
+    font-family: var(--font-body);
+    cursor: pointer;
+    color: #fff;
+    background: var(--azul-600, #2563c4);
+    border: none;
+    border-radius: var(--r-sm);
+    transition: background .12s, transform .1s;
+}
+.btn-act-usar:hover { background: var(--azul-700); }
+.btn-act-usar:active { transform: scale(.97); }
+
+/* ── Fila nueva: animación de entrada ────────────────────── */
+.act-fila-nueva {
+    animation: actFilaNueva .5s ease;
+}
+@keyframes actFilaNueva {
+    0%   { background: #dbeafe; }
+    100% { background: transparent; }
+}
+
+/* ── Impresión: el panel de actividades se oculta en el @media print principal ──────────── */
+
+/* ── Responsive ─────────────────────────────────────────── */
+@media (max-width: 700px) {
+    .act-panel-header { padding: 8px 12px; gap: 6px; }
+    .act-turno-badge, .act-sub-badge { display: none; }
+    .act-desc-preview { display: none; }
+    .act-tabla thead { display: none; }
+    .act-fila td { display: block; padding: 4px 10px; }
+    .act-fila td.act-col-letra { display: inline-block; }
+    .act-fila td.act-col-nombre { display: inline-block; width: calc(100% - 44px); }
+    .act-fila td.act-col-accion { text-align: left; padding-bottom: 8px; }
+    .act-desc-popup { bottom: 70px; }
+}
+
 /* ESTILOS DE IMPRESIÓN @media print */
 @media print {
-    /* Inputs y selects */
-    input, select, textarea {
-        font-size: 9.5pt;
-        border: none !important;
+
+    /* ── Página A4 ── */
+    @page { size: A4; margin: 10mm 12mm; }
+
+    /* ── Forzar colores de fondo ── */
+    * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+
+    /* ── BASE ── */
+    body          { padding: 0 !important; background: #fff !important; font-size: 10pt; }
+    .page-wrapper { display: block !important; max-width: 100% !important; margin: 0 !important; }
+    .documento    { border: none !important; box-shadow: none !important; border-radius: 0 !important; animation: none !important; overflow: visible !important; }
+
+    /* ── OCULTAR: sidebars, controles e interactivos ── */
+    .act-sidebar,
+    .action-bar,
+    .btn-agregar-wrap,
+    .btn-eliminar,
+    .logo-hint,
+    .url-imagen-wrap,
+    .url-dimensiones,
+    .btn-cargar-pc,
+    .url-error,
+    .fotos-indicador,
+    .btn-del-foto,
+    .msg-vacio,
+    .asterisco-obligatorio,
+    .act-desc-popup { display: none !important; }
+
+    /* ── HEADER: respetar el padding/margin del autor ── */
+    .doc-header {
+        display: flex !important;
+        flex-direction: row !important;
+        align-items: center !important;
+        justify-content: space-between !important;
+        background: var(--c-header) !important;
+        margin-left: -60px !important;
+        padding: 14px 70px !important;
+        gap: var(--sp-4) !important;
+    }
+
+    /* ── TURNO PILL: ocultar div decorativo, renderizar el select visible ── */
+    .turno-selector-wrap {
+        position: relative !important;
+        display: inline-flex !important;
+        align-items: center !important;
+    }
+    .turno-pill { display: none !important; }
+    .turno-select {
+        opacity: 1 !important;
+        position: static !important;
+        display: inline-block !important;
+        width: auto !important;
+        height: auto !important;
+        font-size: 13px !important;
+        font-weight: 600 !important;
+        font-family: var(--font-body) !important;
+        color: var(--blanco) !important;
+        background: rgba(255,255,255,.12) !important;
+        border: 1px solid rgba(255,255,255,.28) !important;
+        border-radius: var(--r-sm) !important;
+        padding: 4px 12px !important;
+        appearance: none !important;
+        -webkit-appearance: none !important;
+    }
+
+    /* ── BARRA FECHA / CIUDAD ── */
+    .fecha-bar {
+        background: var(--c-fecha-bar) !important;
+        border-bottom: 2px solid var(--c-acento) !important;
+    }
+    .fecha-field input {
+        color: var(--blanco) !important;
+        background: rgba(255,255,255,.1) !important;
+        border: 1px solid rgba(255,255,255,.2) !important;
+        box-shadow: none !important;
+    }
+
+    /* ── CABECERAS DE SECCIÓN ── */
+    .seccion-header {
+        background: linear-gradient(90deg, var(--c-seccion-1a) 0%, var(--c-seccion-1b) 100%) !important;
+    }
+    .seccion-header--pendientes {
+        background: linear-gradient(90deg, var(--c-seccion-2a) 0%, var(--c-seccion-2b) 100%) !important;
+    }
+    .seccion-titulo { background: var(--azul-800) !important; }
+
+    /* ── TABLA DE COLUMNAS: mantener grid y fondo ── */
+    .tabla-cols, .tabla-cols--pend {
+        background: var(--azul-50) !important;
+        border-bottom: 1.5px solid var(--azul-200) !important;
+        display: grid !important;
+    }
+
+    /* ── FILAS: preservar grid exacto de pantalla ── */
+    .tarea-grid {
+        display: grid !important;
+        grid-template-columns: 160px 120px 1fr 76px !important;
+        padding: 0 14px !important;
+    }
+    .pendiente-grid {
+        display: grid !important;
+        grid-template-columns: 120px 1fr 1fr 76px !important;
+        padding: 0 14px !important;
+    }
+    .tarea-fila, .pendiente-fila { page-break-inside: avoid; border-bottom: 1px solid #e5eaf5 !important; }
+
+    /* ── CELDAS: mantener estilos visuales de pantalla ── */
+    .t-cell {
+        border-right: 1px solid #e5eaf5 !important;
+        padding: 8px 10px !important;
+    }
+    .t-cell:last-child { border-right: none !important; }
+
+    /* ── INPUTS / TEXTAREA dentro de celdas: mantener apariencia de pantalla ── */
+    .t-cell input[type="text"],
+    .t-cell input[type="time"],
+    .t-cell textarea {
+        font-size: 11px !important;
+        color: var(--gris-900) !important;
+        background: var(--gris-50) !important;
+        border: 1px solid var(--gris-300) !important;
+        border-radius: var(--r-sm) !important;
+        padding: 4px 6px !important;
+        box-shadow: none !important;
         resize: none !important;
+        width: 100% !important;
+    }
+
+    /* ── ZONA DE FOTOS: solo mostrar imágenes, sin controles ── */
+    .tarea-fotos-row {
+        display: flex !important;
+        flex-wrap: wrap !important;
+        gap: var(--sp-2) !important;
+        padding: 6px 14px 8px !important;
+        background: #f6f9fe !important;
+        border-top: 1px dashed var(--azul-200) !important;
+        justify-content: flex-start !important;
+    }
+
+    /* ── THUMBNAILS: respetar dimensiones que puso el usuario via JS ── */
+    .preview-thumb {
+        position: relative !important;
+        overflow: hidden !important;
+        border-radius: var(--r-sm) !important;
+        border: 1px solid var(--azul-200) !important;
+        box-shadow: none !important;
+        page-break-inside: avoid;
+        /* width y height los controla el inline style del JS */
+    }
+    .preview-thumb img {
+        width: 100% !important;
+        height: 100% !important;
+        object-fit: cover !important;
+        display: block !important;
+    }
+    .previews-grid {
+        width: 100% !important;
+        display: flex !important;
+        flex-wrap: wrap !important;
+        gap: 6px !important;
+        justify-content: flex-start !important;
+        align-items: flex-start !important;
+    }
+
+    /* ── SECCIÓN FIRMAS ── */
+    .firmas-grid {
+        display: grid !important;
+        grid-template-columns: 1fr 1fr !important;
+        background: var(--gris-50) !important;
+    }
+    .linea-firma { margin-top: 28pt; border-top: 1.5px solid #374151 !important; }
+
+    /* ── CAMPOS DE FIRMA — select y cédula: texto limpio sobre línea ── */
+    .campo-firma select.campo-firma-select {
+        color: var(--gris-900) !important;
+        background: transparent !important;
+        background-image: none !important;
+        border: none !important;
+        border-bottom: 1px solid var(--gris-400) !important;
+        border-radius: 0 !important;
         padding: 2px 0 !important;
+        box-shadow: none !important;
+        appearance: none !important;
+        -webkit-appearance: none !important;
+        font-size: 12px !important;
+        font-weight: 600 !important;
+        width: 100% !important;
+    }
+    .campo-firma input.campo-firma-cedula {
+        color: var(--gris-900) !important;
+        background: transparent !important;
+        border: none !important;
+        border-bottom: 1px solid var(--gris-400) !important;
+        border-radius: 0 !important;
+        padding: 2px 0 !important;
+        box-shadow: none !important;
+        font-size: 12px !important;
+        font-weight: 600 !important;
+        width: 100% !important;
+    }
+
+    /* ── ERRORES DE VALIDACIÓN: ocultar en impresión ── */
+    .campo-error {
+        border-color: transparent !important;
         box-shadow: none !important;
         background: transparent !important;
     }
-    /* Fotos */
-    .preview-thumb { --thumb-w: 90px; }
-    @page {size: A4; margin: 12mm 14mm; }
-    /* Ocultar mensajes vacíos */
-    .msg-vacio { display: none !important; }
-    .btn-del-foto { display: none !important; }
-    .page-wrapper {max-width: 100% !important; }
-    /* Fecha y ciudad: blanco */
-    .fecha-field input { color: var(--blanco) !important; }
-    /* Horas del turno en el header */
-    #horaInicio, #horaFin { color: var(--blanco) !important; }
-    /* Evitar corte entre páginas */
-    .tarea-fila, .pendiente-fila { page-break-inside: avoid; }
-    body { font-size: 10pt; padding: 0 !important; background: white !important; }
-    /* Línea de firma visible en impresión */
-    .linea-firma { margin-top: 28pt; border-top: 1.5px solid #374151 !important; }
-    .documento {border: none !important; box-shadow: none !important; border-radius: 0 !important; }
-    /* Ticket badges */
-    .ticket-badge, .ticket-badge--pend { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
-    /* Ocultar controles interactivos */
-    .action-bar, .btn-agregar-wrap, .btn-eliminar, .btn-foto-label, .logo-hint { display: none !important; }
-    /* fondo y borde para impresión */
-    .firmas-grid { print-color-adjust: exact; background: #f9fafb !important; -webkit-print-color-adjust: exact; }
-    /* Inputs del turno en header */
-    .turno-rango input[type="time"] { border: none !important; color: var(--blanco) !important; background: transparent !important; }
-    /* Campos de firma: texto limpio */
-    .campo-firma input[type="text"] { padding: 1px 0 !important; border-radius: 0 !important; border-bottom: 1px solid var(--gris-400) !important; }
-    /* Forzar colores de fondo en cabeceras */
-    .doc-header, .fecha-bar, .seccion-header, .seccion-header--pendientes, .seccion-titulo, .tabla-cols, .tabla-cols--pend, .doc-footer { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
 }
 
 /* Etiquetas "Anchura" / "Altura" */
@@ -994,17 +1691,91 @@ body {
     padding: 5px 10px 5px;
 }
 
-/* Ajustes en @media print para los nuevos elementos */
-@media print {
-    /* Ocultar zona de carga de imágenes en impresión */
-    .url-imagen-wrap,
-    .url-dimensiones,
-    .btn-cargar-pc,
-    .url-error { display: none !important; }
-}
+/* (Ocultar zona de carga ya consolidado en @media print principal) */
 
 /* ── Ajustes en @media (max-width: 700px) ── */
 @media (max-width: 700px) {
     .url-dimensiones { gap: var(--sp-1); }
     .dims-input { width: 60px; }
 }
+/* ── SELECTS Y CÉDULA DE ANALISTAS (estilo pill del turno, adaptado a contexto claro) ── */
+.campo-firma select.campo-firma-select {
+    width: 100%;
+    outline: none;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    padding: 7px 32px 7px 12px;
+    color: var(--blanco);
+    background: var(--azul-800);
+    border-radius: var(--r-sm);
+    font-family: var(--font-body);
+    border: 1px solid var(--azul-500);
+    transition: border-color .15s, box-shadow .15s;
+    appearance: none;
+    -webkit-appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 16 16' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M4 6l4 4 4-4' stroke='rgba(255,255,255,.55)' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    background-size: 16px 16px;
+}
+
+.campo-firma select.campo-firma-select:focus {
+    border-color: var(--azul-200);
+    box-shadow: 0 0 0 3px rgba(37, 99, 196, .18);
+}
+
+.campo-firma select.campo-firma-select option { color: var(--gris-900); background: var(--blanco); }
+
+.campo-firma input.campo-firma-cedula {
+    width: 100%;
+    outline: none;
+    font-size: 13px;
+    font-weight: 600;
+    padding: 7px 12px;
+    color: var(--blanco);
+    background: var(--azul-800);
+    border-radius: var(--r-sm);
+    font-family: var(--font-body);
+    border: 1px solid var(--azul-800);
+    letter-spacing: .5px;
+    cursor: default;
+}
+
+.campo-firma input.campo-firma-cedula::placeholder { font-style: italic; color: rgba(255, 255, 255, .3); font-weight: 400; }
+
+/* (Impresión de analistas consolidada en @media print principal) */
+
+/* ── ASTERISCO DE CAMPO OBLIGATORIO ── */
+.asterisco-obligatorio {
+    color: #e53e3e;
+    font-weight: 700;
+    font-size: .95em;
+    margin-left: 2px;
+    line-height: 1;
+}
+
+/* ── CAMPO CON ERROR DE VALIDACIÓN ── */
+.campo-error {
+    border-color: #e53e3e !important;
+    box-shadow: 0 0 0 3px rgba(229, 62, 62, .15) !important;
+    background-color: #fff5f5 !important;
+}
+
+.tarea-fotos-row.campo-error {
+    border-top-color: #e53e3e !important;
+    background: #fff5f5 !important;
+    box-shadow: inset 0 0 0 1.5px #e53e3e !important;
+}
+
+/* ── RESPONSIVE ≤ 700px — ajustes para selects de analistas ── */
+@media (max-width: 700px) {
+    .campo-firma select.campo-firma-select,
+    .campo-firma input.campo-firma-cedula { font-size: 12px; padding: 6px 10px; }
+    .firmas-grid { padding: var(--sp-3); gap: var(--sp-4); }
+    /* Sidebars: ocultar en móvil, documento ocupa todo el ancho */
+    .act-sidebar { display: none; }
+    .page-wrapper { grid-template-columns: 1fr; }
+}
+
+/* (Correcciones de impresión consolidadas en @media print principal) */
