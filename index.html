@@ -12,12 +12,76 @@
 		<noscript>
 			<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Source+Sans+3:wght@300;400;500;600;700&display=swap">
 		</noscript>
+<<<<<<< HEAD
 		<link rel="stylesheet" href="./styles.css">
+=======
+		<!-- Bootstrap 5 — solo layout y utilities; colores corporativos en styles.css -->
+	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+	      integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH"
+	      crossorigin="anonymous">
+	<link rel="stylesheet" href="./styles.css">
+>>>>>>> 4aedbfd (Feat: New code and segments thereof)
 		<!-- Script con defer -->
 		<script src="./script.js" defer> </script>
 	</head>
 	<body>
+<<<<<<< HEAD
 		<div class="page-wrapper">
+=======
+		<!-- ═══════════════════════════════════════════════════════════
+		     LAYOUT PRINCIPAL — Bootstrap 5 container-fluid
+		     col-lg-3 | col-lg-6 | col-lg-3
+		     Los paneles laterales tienen d-print-none — no se imprimen
+		═══════════════════════════════════════════════════════════ -->
+		<div class="container-fluid px-2 px-lg-3">
+		<div class="row g-3 align-items-start">
+
+			<!-- ─── COLUMNA IZQUIERDA: Actividades Obligatorias ─── -->
+			<div class="col-lg-3 d-none d-lg-block d-print-none" id="colObligatorias">
+				<aside class="act-sidebar act-sidebar--oblig h-100" id="panelObligatorias" aria-label="Actividades obligatorias">
+
+					<!-- Header del panel -->
+					<div class="act-sidebar-header act-sidebar-header--oblig">
+						<svg class="seccion-icon" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+							<circle cx="10" cy="10" r="8.5" stroke="currentColor" stroke-width="1.6"/>
+							<path d="M6.5 10l2.5 2.5 4.5-5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+						</svg>
+						<span>OBLIGATORIAS</span>
+						<span class="act-turno-badge ms-auto" id="actTurnoBadge">— sin turno —</span>
+					</div>
+
+					<!-- Aviso sin turno -->
+					<div class="act-aviso-turno" id="actAvisoTurno">
+						<svg viewBox="0 0 20 20" fill="none" aria-hidden="true" style="width:13px;height:13px;flex-shrink:0">
+							<circle cx="10" cy="10" r="8" stroke="currentColor" stroke-width="1.5"/>
+							<line x1="10" y1="6.5" x2="10" y2="11" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+							<circle cx="10" cy="13.5" r="1" fill="currentColor"/>
+						</svg>
+						<span>Selecciona un turno para ver las actividades.</span>
+					</div>
+
+					<!-- Tabla de actividades obligatorias -->
+					<div class="act-tabla-wrap">
+						<table class="act-tabla w-100" id="tablaObligatorias" aria-label="Actividades obligatorias del turno">
+							<thead>
+								<tr>
+									<th class="act-col-letra">ID</th>
+									<th class="act-col-nombre">Actividad</th>
+									<th class="act-col-accion text-center">+</th>
+								</tr>
+							</thead>
+							<tbody id="bodyObligatorias">
+								<!-- Filas generadas por JS según turno -->
+							</tbody>
+						</table>
+					</div>
+
+				</aside>
+			</div><!-- /col izquierda -->
+
+			<!-- ─── COLUMNA CENTRAL: Documento principal ─── -->
+			<div class="col-12 col-lg-6 col-print-12" id="colDocumento">
+>>>>>>> 4aedbfd (Feat: New code and segments thereof)
 			<main class="documento" id="documento">
 				<!-- HEADER -->
 				<header class="doc-header">
@@ -40,9 +104,15 @@
 					<div style="flex:1; text-align:center;">
 						<div style="font-size:17px; font-weight:700; letter-spacing:3px; color:#fff; line-height:1;"> ENTREGA DE TURNO </div>
 						<div style="margin-top:5px; display:flex; align-items:center; justify-content:center; gap:8px;">
+<<<<<<< HEAD
 							<span style="font-size:10px; color:rgba(255, 255, 255, 0.801); text-transform:uppercase; letter-spacing:.8px;"> Turno: </span>
 							<div class="turno-selector-wrap">
 								<div class="turno-pill" id="turnoPill"> 6:00 am - 2:00 pm </div>
+=======
+							<span style="font-size:10px; color:rgba(255, 255, 255, 0.801); text-transform:uppercase; letter-spacing:.8px;"> Turno: <span class="asterisco-obligatorio">*</span> </span>
+							<div class="turno-selector-wrap">
+								<div class="turno-pill" id="turnoPill"> Selecciona un Turno </div>
+>>>>>>> 4aedbfd (Feat: New code and segments thereof)
 								<select id="turnoSelect" class="turno-select" aria-label="Seleccionar turno">
 									<option value="6:00 am - 2:00 pm"> 6:00 am - 2:00 pm </option>
 									<option value="2:00 pm - 10:00 pm"> 2:00 pm - 10:00 pm </option>
@@ -72,8 +142,13 @@
 					<div class="seccion-header"> <h2 id="hTareasRealizadas"> TAREAS REALIZADAS </h2> </div>
 					<div class="tabla-cols" id="tablaColsTareas" role="row" aria-hidden="true">
 						<div class="col-turno"> Turno </div>
+<<<<<<< HEAD
 						<div class="col-ticket"> Ticket / Caso </div>
 						<div class="col-desc"> Descripción de la tarea </div>
+=======
+						<div class="col-ticket"> Ticket / Caso <span class="asterisco-obligatorio">*</span> </div>
+						<div class="col-desc"> Descripción de la tarea <span class="asterisco-obligatorio" aria-hidden="true">*</span></div>
+>>>>>>> 4aedbfd (Feat: New code and segments thereof)
 						<div class="col-acciones"> Acciones </div>
 					</div>
 					<div id="listaTareas" role="list"> </div>
@@ -92,8 +167,13 @@
 				<section class="seccion" id="secPendientes" aria-labelledby="hTareasPendientes">
 					<div class="seccion-header seccion-header--pendientes"> <h2 id="hTareasPendientes"> TAREAS PENDIENTES </h2> </div>
 					<div class="tabla-cols tabla-cols--pend" id="tablaColsPend" role="row" aria-hidden="true">
+<<<<<<< HEAD
 						<div class="col-ticket"> Ticket / Caso </div>
 						<div class="col-desc"> Descripción del pendiente </div>
+=======
+						<div class="col-ticket"> Ticket / Caso <span class="asterisco-obligatorio">*</span> </div>
+						<div class="col-desc"> Descripción del pendiente <span class="asterisco-obligatorio" aria-hidden="true">*</span></div>
+>>>>>>> 4aedbfd (Feat: New code and segments thereof)
 						<div class="col-motivo"> Motivo por el que queda pendiente </div>
 						<div class="col-acciones"> Acciones </div>
 					</div>
@@ -114,6 +194,7 @@
 					<div class="seccion-titulo"> <h2 id="hFirmas"> RESPONSABLES </h2> </div>
 					<div class="firmas-grid">
 						<div class="firma-bloque">
+<<<<<<< HEAD
 							<div class="firma-titulo"> Empleado Saliente </div>
 							<div class="campo-firma">
 								<label for="salienteNombre"> Nombre completo </label>
@@ -122,10 +203,30 @@
 							<div class="campo-firma">
 								<label for="salienteDNI"> DNI / Cédula </label>
 								<input type="text" id="salienteDNI" placeholder="N° de identificación..." autocomplete="off">
+=======
+							<div class="firma-titulo"> Empleado Entrante </div>
+							<div class="campo-firma">
+								<label for="entranteNombre"> Nombre completo <span class="asterisco-obligatorio">*</span> </label>
+								<select id="entranteNombre" class="campo-firma-select" aria-label="Seleccionar empleado entrante">
+									<option value=""> Selecciona un Analista </option>
+									<option value="Juan Diego Mazo Lezcano"> Juan Diego Mazo Lezcano </option>
+									<option value="Juan José Santana Garzón"> Juan José Santana Garzón </option>
+									<option value="Juan Pablo Gaviria Correa"> Juan Pablo Gaviria Correa </option>
+									<option value="Julian García Araque"> Julian García Araque </option>
+									<option value="Kevin Daniel Mosquera Cordoba"> Kevin Daniel Mosquera Cordoba </option>
+									<option value="William David Jarava Solano"> William David Jarava Solano </option>
+									<option value="Yin Carlos Martinez Perez"> Yin Carlos Martinez Perez </option>
+								</select>
+							</div>
+							<div class="campo-firma">
+								<label for="estranteDNI"> DNI / Cédula </label>
+								<input type="text" id="estranteDNI" class="campo-firma-cedula" placeholder="Se completa automáticamente..." autocomplete="off" readonly>
+>>>>>>> 4aedbfd (Feat: New code and segments thereof)
 							</div>
 							<div class="linea-firma" aria-hidden="true"> </div>
 						</div>
 						<div class="firma-bloque">
+<<<<<<< HEAD
 							<div class="firma-titulo"> Empleado Entrante </div>
 							<div class="campo-firma">
 								<label for="entranteNombre"> Nombre completo </label>
@@ -134,6 +235,25 @@
 							<div class="campo-firma">
 								<label for="estranteDNI"> DNI / Cédula </label>
 								<input type="text" id="estranteDNI" placeholder="N° de identificación..." autocomplete="off">
+=======
+							<div class="firma-titulo"> Empleado Saliente </div>
+							<div class="campo-firma">
+								<label for="salienteNombre"> Nombre completo <span class="asterisco-obligatorio">*</span> </label>
+								<select id="salienteNombre" class="campo-firma-select" aria-label="Seleccionar empleado saliente">
+									<option value=""> Selecciona un Analista </option>
+									<option value="Juan Diego Mazo Lezcano"> Juan Diego Mazo Lezcano </option>
+									<option value="Juan José Santana Garzón"> Juan José Santana Garzón </option>
+									<option value="Juan Pablo Gaviria Correa"> Juan Pablo Gaviria Correa </option>
+									<option value="Julian García Araque"> Julian García Araque </option>
+									<option value="Kevin Daniel Mosquera Cordoba"> Kevin Daniel Mosquera Cordoba </option>
+									<option value="William David Jarava Solano"> William David Jarava Solano </option>
+									<option value="Yin Carlos Martinez Perez"> Yin Carlos Martinez Perez </option>
+								</select>
+							</div>
+							<div class="campo-firma">
+								<label for="salienteDNI"> DNI / Cédula </label>
+								<input type="text" id="salienteDNI" class="campo-firma-cedula" placeholder="Se completa automáticamente..." autocomplete="off" readonly>
+>>>>>>> 4aedbfd (Feat: New code and segments thereof)
 							</div>
 							<div class="linea-firma" aria-hidden="true"> </div>
 						</div>
@@ -145,7 +265,48 @@
 					<span id="footerFecha"> </span>
 				</footer>
 			</main>
+<<<<<<< HEAD
 		</div> <!-- /page-wrapper -->
+=======
+			</div><!-- /col central -->
+
+			<!-- ─── COLUMNA DERECHA: Actividades Opcionales ─── -->
+			<div class="col-lg-3 d-none d-lg-block d-print-none" id="colOpcionales">
+				<aside class="act-sidebar act-sidebar--opc h-100" id="panelOpcionales" aria-label="Actividades opcionales">
+
+					<!-- Header del panel -->
+					<div class="act-sidebar-header act-sidebar-header--opc">
+						<svg class="seccion-icon" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+							<rect x="3" y="3" width="14" height="14" rx="3" stroke="currentColor" stroke-width="1.6"/>
+							<path d="M7 10h6M10 7v6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+						</svg>
+						<span>OPCIONALES</span>
+						<span class="act-sub-badge ms-auto">Todos los turnos</span>
+					</div>
+
+					<!-- Tabla de actividades opcionales -->
+					<div class="act-tabla-wrap">
+						<table class="act-tabla w-100" id="tablaOpcionales" aria-label="Actividades opcionales">
+							<thead>
+								<tr>
+									<th class="act-col-letra">ID</th>
+									<th class="act-col-nombre">Actividad</th>
+									<th class="act-col-accion text-center">+</th>
+								</tr>
+							</thead>
+							<tbody id="bodyOpcionales">
+								<!-- Generadas por JS — siempre visibles -->
+							</tbody>
+						</table>
+					</div>
+
+				</aside>
+			</div><!-- /col derecha -->
+
+		</div><!-- /row -->
+		</div><!-- /container-fluid -->
+
+>>>>>>> 4aedbfd (Feat: New code and segments thereof)
 		<!-- BARRA DE ACCIONES STICKY -->
 		<div class="action-bar" id="actionBar" role="toolbar" aria-label="Acciones del documento">
 			<button class="btn-clear" id="btnClear" type="button" title="Reiniciar todo el formulario"> Limpiar </button>
@@ -160,5 +321,13 @@
 				Imprimir
 			</button>
 		</div>
+<<<<<<< HEAD
 	</body>
 </html>
+=======
+	<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+	        integrity="sha384-YvpcrYf0tY3lHB60NNkmXc4s9bIOgUxi8T/jzmkBO04xF3j5wqLG3KubqT8y+IXb"
+	        crossorigin="anonymous"></script>
+	</body>
+</html>
+>>>>>>> 4aedbfd (Feat: New code and segments thereof)
