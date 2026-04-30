@@ -1,4 +1,46 @@
-/* ENTREGA DE TURNO ESTILOS
+/* ENTREGA DE TURNO ESTILOS */
+/* FUENTE CORPORATIVA LOCAL 
+    Sirve Source Sans 3 desde /fonts/ cuando el archivo está disponible.
+    El stack de sistema (Segoe UI, system-ui) actúa como fallback inmediato sin ninguna petición de red cero retraso tipográfico garantizado.
+    Para activar la fuente local, coloca en /fonts/: 
+        source-sans-3-300.woff2   (Light)
+        source-sans-3-400.woff2   (Regular)
+        source-sans-3-600.woff2   (SemiBold)
+        source-sans-3-700.woff2   (Bold)
+        Descarga gratuita: https://fontsource.org/fonts/source-sans-3
+*/
+@font-face {
+    font-weight: 300;
+    font-display: swap; /* muestra texto del sistema hasta que cargue */
+    font-style: normal;
+    font-family: 'Source Sans 3';
+    src: url('./fonts/source-sans-3-300.woff2') format('woff2');
+}
+
+@font-face {
+    font-weight: 400;
+    font-display: swap;
+    font-style: normal;
+    font-family: 'Source Sans 3';
+    src: url('./fonts/source-sans-3-400.woff2') format('woff2');
+}
+
+@font-face {
+    font-weight: 600;
+    font-display: swap;
+    font-style: normal;
+    font-family: 'Source Sans 3';
+    src: url('./fonts/source-sans-3-600.woff2') format('woff2');
+}
+
+@font-face {
+    font-weight: 700;
+    font-display: swap;
+    font-style: normal;
+    font-family: 'Source Sans 3';
+    src: url('./fonts/source-sans-3-700.woff2') format('woff2');
+}
+
 /* VARIABLES GLOBALES */
 :root {
     /* Espaciado */
@@ -53,9 +95,9 @@
     --gris-300: #D1D5DB;
     --gris-200: #E5E7EB;
     --gris-100: #F3F4F6;
-    /* Tipografía */
-    --font-display: 'Playfair Display', Georgia, serif;
-    --font-body: 'Source Sans 3', system-ui, sans-serif;
+    /* Tipografía fuente única corporativa */
+    --font-display: 'Source Sans 3', 'Segoe UI', system-ui, sans-serif;
+    --font-body:    'Source Sans 3', 'Segoe UI', system-ui, sans-serif;
     /* Sombras */
     --shadow-sm: 0 1px 3px rgba(13, 34, 64, .07), 0 1px 2px rgba(13, 34, 64, .05);
     --shadow-lg: 0 12px 40px rgba(13, 34, 64, .14), 0 4px 12px rgba(13, 34, 64, .08);
@@ -71,21 +113,18 @@ body {
     background: #f4f6fa;
     color: var(--gris-900);
     font-family: var(--font-body);
-    padding: var(--sp-8) var(--sp-4) 90px;
+    padding-top: var(--sp-4);
+    padding-bottom: 90px;
+    /* Padding lateral lo gestiona Bootstrap container-fluid */
 }
 
-/* CONTENEDOR PÁGINA — layout 3 columnas: sidebar | documento | sidebar */
-.page-wrapper {
-    gap: 16px;
-    display: grid;
-    margin: 0 auto;
-    align-items: start;
-    max-width: 1440px;
-    grid-template-columns: 220px minmax(0, 960px) 220px;
-}
+/* CONTENEDOR PÁGINA */
+/* .page-wrapper conservado solo para compatibilidad de selectores JS */
+.page-wrapper { display: contents; }
 
 /* DOCUMENTO PRINCIPAL */
 .documento {
+    width: 100%;
     overflow: hidden;
     background: var(--blanco);
     border-radius: var(--r-lg);
@@ -103,8 +142,7 @@ body {
 .doc-header {
     display: flex;
     gap: var(--sp-4);
-    margin-left: -60px;
-    padding: 14px 70px;
+    padding: 14px 20px;
     align-items: center;
     background: var(--c-header);
     justify-content: space-between;
@@ -129,7 +167,7 @@ body {
 
 .logo-zone:hover { border-color: rgba(255, 255, 255, .5); box-shadow: 0 0 0 3px rgba(255, 255, 255, .06); }
 
-/* Logo estático: sin cursor interactivo ni efectos hover */
+/* Logo estático */
 .logo-zone--static { cursor: default; pointer-events: none; }
 .logo-zone--static:hover { border-color: rgba(255, 255, 255, .18); box-shadow: none; }
 
@@ -469,7 +507,7 @@ body {
     border-top: 1px dashed var(--azul-200);
 }
 
-/* Zona de fotos para pendientes — idéntica pero con borde superior ámbar sutil */
+/* Zona de fotos para pendientes idéntica pero con borde superior ámbar sutil */
 .pend-fotos-row { border-top-color: #f0c04066; }
 
 /* Indicador textual de fotos (sin imágenes) */
@@ -511,14 +549,22 @@ body {
 
 .btn-foto-label svg { width: 13px; height: 13px; flex-shrink: 0; }
 
-/* Grid de miniaturas — centrado */
+/* Grid de miniaturas centrado */
 .previews-grid {
     width: 100%;
     display: flex;
     flex-wrap: wrap;
-    gap: var(--sp-2);
+    gap: var(--sp-3);
     justify-content: center;
     align-items: flex-start;
+}
+
+/* Contenedor por imagen: imagen encima, caption debajo */
+.preview-item {
+    gap: 0;
+    display: flex;
+    align-items: center;
+    flex-direction: column;
 }
 
 /* Thumbnail, dimensiones controladas por variables CSS */
@@ -539,6 +585,48 @@ body {
     height: 100%;
     display: block;
     object-fit: cover;
+}
+
+/*  DESCRIPCIÓN / PIE DE FOTO */
+.foto-caption-wrap {
+    width: 100%;
+    display: flex;
+    margin-top: 4px;
+    align-items: center;
+    flex-direction: column;
+}
+
+.foto-caption {
+    width: 100%;
+    resize: none;
+    outline: none;
+    max-width: 100%;
+    font-size: 11px;
+    min-height: 28px;
+    font-weight: 400;
+    line-height: 1.4;
+    padding: 4px 6px;
+    overflow: hidden;
+    text-align: center;
+    font-style: italic;
+    color: var(--gris-700);
+    background: transparent;
+    border-radius: var(--r-sm);
+    font-family: var(--font-body);
+    border: 1px solid transparent;
+    transition: border-color .15s, background .15s;
+}
+
+.foto-caption::placeholder {
+    font-size: 10.5px;
+    font-style: italic;
+    color: var(--gris-400);
+}
+
+.foto-caption:focus {
+    outline: none;
+    background: var(--gris-50);
+    border-color: var(--azul-200);
 }
 
 /* Botón para eliminar foto individual */
@@ -783,11 +871,7 @@ body {
 
 .linea-firma { padding-top: 4px; text-align: center; margin-top: var(--sp-5); border-top: 1.5px solid var(--gris-700); }
 
-/*
- preview-thumb con variables CSS y aspect-ratio bloqueado Cambia
- --thumb-w para ajustar el tamaño sin distorsión.
- --thumb-ratio controla el ratio (defecto 4/3).
-*/
+/* preview-thumb con variables CSS y aspect-ratio bloqueado Cambia */
 :root {
     --thumb-w: 80px;
     /* ancho base del thumbnail */
@@ -866,159 +950,147 @@ body {
 
 .btn-print:hover { background: var(--azul-50); transform: translateY(-1px); box-shadow: 0 4px 18px rgba(0, 0, 0, .25); }
 
-/* RESPONSIVE ≤ 700px*/
-@media (max-width: 700px) {
-    /* Header apilado */
-    .doc-header {
-        gap: 10px;
-        padding: 14px 16px;
-        flex-direction: column;
-        align-items: flex-start;
-    }
-    body { padding: 10px 8px 80px; }
-    .turno-rango { gap: var(--sp-1); }
+/* RESPONSIVE ≤ 575px (xs Bootstrap) móvil */
+@media (max-width: 575.98px) {
+    body { padding-top: 8px; padding-bottom: 80px; }
+    /* Header: columna centrada */
+    .fecha-field { width: 100%; }
+    /* Fecha bar: apilada */
+    .fecha-bar { padding: 8px 12px; }
+    .btn-clear  { padding: 7px 12px; }
+    /* Action bar */
     .action-bar { padding: 10px 12px; }
-    .header-right-spacer {display: none; }
-    .tarea-fotos-row { padding: 6px 8px 8px; }
-    .t-cell:last-child { border-bottom: none; }
-    .header-center { align-items: flex-start; }
-    /* Ocultar cabeceras de columnas en móvil */
+    .header-right-spacer { display: none; }
+    #ciudadInput, #fechaInput { width: 100%; }
+    /* Zona fotos: menos padding */
+    .tarea-fotos-row { padding: 6px 10px 10px; }
+    /* Tabla de tareas: columna única */
     .tabla-cols, .tabla-cols--pend { display: none; }
-    .btn-print { font-size: 12px; padding: 8px 14px; }
-    .doc-titulo {font-size: 19px; letter-spacing: 2px; }
-    /* Horas del turno en el header */
-    .turno-rango input[type="time"] { width: 100px; font-size: 13px; }
-    /* Celdas apiladas */
-    .tarea-grid, .pendiente-grid { padding: 0 8px; grid-template-columns: 1fr; }
-    .t-cell { padding: 8px; border-right: none; border-bottom: 1px solid #e5eaf5; }
-    /* Firmas: columna única en móvil */
-    .firmas-grid { gap: var(--sp-5); padding: var(--sp-4); grid-template-columns: 1fr; }
+    .btn-print  { font-size: 12px; padding: 8px 14px; }
+    .tarea-grid { grid-template-columns: 1fr; padding: 0 10px; }
+    .pendiente-grid { grid-template-columns: 1fr; padding: 0 10px; }
+    .fecha-bar-inner { flex-direction: column; align-items: flex-start; gap: 6px; }
+    /* Firmas: columna única */
+    .firmas-grid { grid-template-columns: 1fr; gap: var(--sp-4); padding: var(--sp-3); }
+    .t-cell { padding: 8px 6px; border-right: none; border-bottom: 1px solid #e5eaf5; }
+    .t-cell:last-child { border-bottom: none; align-items: flex-start; justify-content: flex-start; }
+    .doc-header { gap: 8px; text-align: center; padding: 12px 14px; align-items: center; flex-direction: column; }
 }
 
+/* RESPONSIVE 576px–991px (tablet) */
+@media (min-width: 576px) and (max-width: 991.98px) {
+    /* Header: horizontal pero compacto */
+    .doc-header { padding: 12px 16px; }
+    body { padding-top: 12px; padding-bottom: 88px; }
+    /* Fecha bar */
+    .fecha-bar-inner { justify-content: flex-start; }
+    /* Firmas: mantener 2 columnas si cabe */
+    .firmas-grid { padding: var(--sp-4); gap: var(--sp-4); }
+    /* Tareas: columnas más compactas */
+    .tarea-grid { grid-template-columns: 130px 100px 1fr 70px; }
+    .tabla-cols { grid-template-columns: 130px 100px 1fr 70px; }
+    .pendiente-grid { grid-template-columns: 100px 1fr 1fr 70px; }
+    .tabla-cols--pend { grid-template-columns: 100px 1fr 1fr 70px; }
+}
 
-/* ══════════════════════════════════════════════════════════════
-   SIDEBARS EXTERNOS DE ACTIVIDADES
-   Cada sidebar es completamente independiente:
-   — su propia variable de alto máximo
-   — su propio scroll interno
-   — sin dependencia mutua de tamaño
-   Viven fuera del main.documento — no se imprimen nunca.
-   ══════════════════════════════════════════════════════════════ */
+/* RESPONSIVE ≥ 992px (lg Bootstrap - layout 3 columnas)  */
+@media (min-width: 992px) {
+    #colObligatorias, #colOpcionales { padding-top: 4px; }
+    .act-sidebar--opc { max-height: var(--sidebar-opc-max-h); }
+    /* Sidebars: sticky con altura máxima independiente */
+    .act-sidebar--oblig { max-height: var(--sidebar-oblig-max-h); }
+    /* Scroll interno de cada tabla */
+    .act-sidebar--opc .act-tabla-wrap { max-height: calc(var(--sidebar-opc-max-h)   - 80px); }
+    .act-sidebar--oblig .act-tabla-wrap { max-height: calc(var(--sidebar-oblig-max-h) - 130px); }
+    /* Separación entre sidebars y documento */
+}
 
-/* Variables individuales de cada sidebar.
-   Modificar aquí para ajustar la altura de cada panel de forma independiente. */
+/* Variables individuales de cada sidebar */
 :root {
+    --sidebar-opc-max-h:   calc(100vh - 120px); /* alto máximo panel opcionales */
     --sidebar-oblig-max-h: calc(100vh - 120px); /* alto máximo panel obligatorias */
-    --sidebar-opc-max-h:   calc(100vh - 120px); /* alto máximo panel opcionales   */
-    --sidebar-width:       220px;                /* ancho compartido (editable)     */
 }
 
-/* Base compartida — solo layout y apariencia común */
+/* Base compartida */
 .act-sidebar {
     top: 16px;
+    width: 100%; /* ocupa toda la columna Bootstrap */
+    display: flex;
     position: sticky;
     overflow: hidden;
-    display: flex;
     flex-direction: column;
-    width: var(--sidebar-width);
-    border-radius: var(--r-lg);
     background: var(--blanco);
-    border: 1px solid var(--azul-200);
+    border-radius: var(--r-lg);
     box-shadow: var(--shadow-lg);
-    /* max-height se sobreescribe individualmente abajo */
+    border: 1px solid var(--azul-200);
 }
 
-/* ── Altura independiente por sidebar ── */
-.act-sidebar--oblig {
-    max-height: var(--sidebar-oblig-max-h);
-}
+/* Altura independiente por sidebar */
+.act-sidebar--oblig { max-height: var(--sidebar-oblig-max-h); }
 
-.act-sidebar--opc {
-    max-height: var(--sidebar-opc-max-h);
-}
+.act-sidebar--opc { max-height: var(--sidebar-opc-max-h); }
 
-/* Cabecera del sidebar — Obligatorias */
+/* Cabecera del sidebar */
 .act-sidebar-header {
-    display: flex;
-    align-items: center;
     gap: 7px;
-    padding: 9px 12px;
+    display: flex;
+    flex-shrink: 0;
     font-size: 10px;
+    flex-wrap: wrap;
     font-weight: 700;
+    padding: 9px 12px;
+    align-items: center;
+    color: var(--blanco);
     letter-spacing: 1.5px;
     text-transform: uppercase;
-    color: var(--blanco);
-    flex-shrink: 0;
-    flex-wrap: wrap;
 }
 
-.act-sidebar-header--oblig {
-    background: linear-gradient(90deg, #1b3f7a 0%, #1e5aab 100%);
-    border-bottom: 2px solid var(--c-acento);
-}
+.act-sidebar-header--oblig { border-bottom: 2px solid var(--c-acento); background: linear-gradient(90deg, #1b3f7a 0%, #1e5aab 100%); }
 
-.act-sidebar-header--opc {
-    background: linear-gradient(90deg, var(--c-seccion-2a) 0%, #163264 100%);
-    border-bottom: 2px solid #1e4a88;
-}
+.act-sidebar-header--opc { border-bottom: 2px solid #1e4a88; background: linear-gradient(90deg, var(--c-seccion-2a) 0%, #163264 100%); }
 
-.act-sidebar-header .seccion-icon {
-    width: 14px;
-    height: 14px;
-    flex-shrink: 0;
-    opacity: .85;
-}
+.act-sidebar-header .seccion-icon { width: 14px; opacity: .85; height: 14px; flex-shrink: 0; }
 
-/* Tabla dentro del sidebar — scroll si supera la altura */
-.act-sidebar .act-tabla {
-    flex: 1;
-    display: block;
-    /* scroll gestionado por cada .act-sidebar--* en el tbody */
-}
+/* Tabla dentro del sidebar */
+.act-sidebar .act-tabla { flex: 1; display: block; }
 
 .act-sidebar .act-tabla thead { display: table; width: 100%; table-layout: fixed; }
+
 /* Scroll independiente para obligatorias */
-.act-sidebar--oblig .act-tabla tbody {
-    display: block;
-    overflow-y: auto;
-    max-height: calc(var(--sidebar-oblig-max-h) - 130px);
-}
+.act-sidebar--oblig .act-tabla tbody { display: block; overflow-y: auto; max-height: calc(var(--sidebar-oblig-max-h) - 130px); }
 
 /* Scroll independiente para opcionales */
-.act-sidebar--opc .act-tabla tbody {
-    display: block;
-    overflow-y: auto;
-    max-height: calc(var(--sidebar-opc-max-h) - 80px);
-}
+.act-sidebar--opc .act-tabla tbody { display: block; overflow-y: auto; max-height: calc(var(--sidebar-opc-max-h) - 80px); }
+
 .act-sidebar .act-tabla tr    { display: table; width: 100%; table-layout: fixed; }
 
 /* Aviso turno dentro del sidebar */
 .act-sidebar .act-aviso-turno {
-    display: flex;
-    align-items: flex-start;
     gap: 7px;
-    padding: 10px 12px;
+    display: flex;
+    flex-shrink: 0;
     font-size: 11px;
+    padding: 10px 12px;
     color: var(--azul-700);
+    align-items: flex-start;
     background: var(--azul-50);
     border-bottom: 1px dashed var(--azul-200);
-    flex-shrink: 0;
 }
 
 /* Badge del turno en el header del sidebar */
 .act-sidebar .act-turno-badge {
     font-size: 9px;
+    margin-top: 2px;
     font-weight: 500;
+    padding: 1px 7px;
+    margin-left: auto;
+    border-radius: 20px;
+    white-space: nowrap;
     letter-spacing: .3px;
     text-transform: none;
     color: rgba(255,255,255,.7);
     background: rgba(255,255,255,.12);
     border: 1px solid rgba(255,255,255,.2);
-    border-radius: 20px;
-    padding: 1px 7px;
-    white-space: nowrap;
-    margin-left: auto;
-    margin-top: 2px;
 }
 
 /* Cabeceras de columna de la tabla */
@@ -1026,248 +1098,221 @@ body {
     padding: 5px 6px;
     font-size: 8.5px;
     font-weight: 700;
-    letter-spacing: .6px;
-    text-transform: uppercase;
-    color: var(--azul-700);
-    background: var(--azul-50);
-    border-bottom: 1.5px solid var(--azul-200);
     text-align: left;
     white-space: nowrap;
+    letter-spacing: .6px;
+    color: var(--azul-700);
+    text-transform: uppercase;
+    background: var(--azul-50);
+    border-bottom: 1.5px solid var(--azul-200);
 }
 
 .act-sidebar .act-tabla thead th.act-col-accion { text-align: center; }
 
 /* Filas de actividades en sidebar */
-.act-sidebar .act-fila {
-    border-bottom: 1px solid #eef1f8;
-    transition: background .12s;
-}
+.act-sidebar .act-fila { transition: background .12s; border-bottom: 1px solid #eef1f8; }
+
 .act-sidebar .act-fila:last-child { border-bottom: none; }
+
 .act-sidebar .act-fila:hover { background: #f4f8ff; }
 
-.act-sidebar .act-fila td {
-    padding: 6px 6px;
-    vertical-align: top;
-    font-size: 11.5px;
-}
+.act-sidebar .act-fila td { padding: 6px 6px; font-size: 11.5px; vertical-align: top; }
+
 .act-sidebar .act-fila td.act-col-letra { vertical-align: middle; text-align: center; }
+
 .act-sidebar .act-fila td.act-col-accion { vertical-align: middle; text-align: center; }
 
 /* Badge de letra en sidebar */
 .act-sidebar .act-letra-badge {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
     width: 20px;
     height: 20px;
-    border-radius: 50%;
+    flex-shrink: 0;
     font-size: 10px;
     font-weight: 700;
-    flex-shrink: 0;
+    border-radius: 50%;
+    align-items: center;
+    display: inline-flex;
+    justify-content: center;
 }
 
 /* Nombre de la actividad en sidebar */
 .act-sidebar .act-nombre {
     display: block;
     font-size: 11px;
-    font-weight: 600;
-    color: var(--gris-900);
     cursor: pointer;
+    font-weight: 600;
     line-height: 1.35;
+    color: var(--gris-900);
     transition: color .12s;
 }
 .act-sidebar .act-nombre:hover { color: var(--azul-700); text-decoration: underline; }
 
-/* Vista previa de descripción — oculta en sidebar para ahorrar espacio */
+/* Vista previa de descripción */
 .act-sidebar .act-desc-preview { display: none; }
 
 /* Botón "+" en sidebar */
 .act-sidebar .btn-act-agregar {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
+    padding: 0;
     width: 24px;
     height: 24px;
-    padding: 0;
+    line-height: 1;
+    cursor: pointer;
     font-size: 16px;
     font-weight: 700;
-    line-height: 1;
-    font-family: var(--font-body);
-    cursor: pointer;
+    align-items: center;
+    display: inline-flex;
     color: var(--azul-700);
+    justify-content: center;
     background: var(--azul-50);
-    border: 1px solid var(--azul-200);
     border-radius: var(--r-sm);
+    font-family: var(--font-body);
+    border: 1px solid var(--azul-200);
     transition: background .12s, border-color .12s, transform .1s;
 }
-.act-sidebar .btn-act-agregar:hover {
-    background: var(--azul-100);
-    border-color: var(--azul-500);
-    color: var(--azul-800);
-}
+.act-sidebar .btn-act-agregar:hover { color: var(--azul-800); background: var(--azul-100); border-color: var(--azul-500); }
+
 .act-sidebar .btn-act-agregar:active { transform: scale(.92); }
+
 .act-sidebar .btn-act-agregar svg { display: none; } /* mostrar solo el "+" del texto */
 
 /* Columnas de ancho en sidebar */
 .act-sidebar .act-col-letra  { width: 28px; }
+
 .act-sidebar .act-col-accion { width: 30px; }
 
 /* Feedback: botón recién pulsado */
-.act-sidebar .btn-act-agregado {
-    background: #d1fae5 !important;
-    border-color: #34d399 !important;
-    color: #065f46 !important;
+.act-sidebar .btn-act-agregado { color: #065f46 !important; background: #d1fae5 !important; border-color: #34d399 !important; }
+
+/* Paneles */
+.act-panel {
+    display: flex;
+    overflow: hidden;
+    border-bottom: none;
+    flex-direction: column;
+    border-right: 1px solid var(--azul-200);
 }
 
-/* ── Paneles ───────────────────────────────────────────────── */
-.act-panel {
-    border-bottom: none;
-    border-right: 1px solid var(--azul-200);
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-}
 .act-panel:last-child { border-right: none; }
 
-/* ── Cabecera del panel ────────────────────────────────────── */
+/* Cabecera del panel */
 .act-panel-header {
-    display: flex;
-    align-items: center;
     gap: 10px;
-    padding: 9px 18px;
+    display: flex;
+    color: #fff;
     font-size: 11px;
     font-weight: 700;
+    padding: 9px 18px;
+    align-items: center;
     letter-spacing: 2px;
     text-transform: uppercase;
-    color: #fff;
 }
 
-.act-panel-header--oblig {
-    background: linear-gradient(90deg, #1b3f7a 0%, #1e5aab 100%);
-    border-bottom: 2px solid #2563c4;
-}
+.act-panel-header--oblig { border-bottom: 2px solid #2563c4; background: linear-gradient(90deg, #1b3f7a 0%, #1e5aab 100%); }
 
-.act-panel-header--opc {
-    background: linear-gradient(90deg, #0d1b3e 0%, #163264 100%);
-    border-bottom: 2px solid #1e4a88;
-}
+.act-panel-header--opc { border-bottom: 2px solid #1e4a88; background: linear-gradient(90deg, #0d1b3e 0%, #163264 100%); }
 
-.act-panel-header .seccion-icon {
-    width: 16px;
-    height: 16px;
-    opacity: .85;
-    flex-shrink: 0;
-}
+.act-panel-header .seccion-icon { width: 16px; opacity: .85; height: 16px; flex-shrink: 0; }
 
 /* Badge del turno activo en el header */
 .act-turno-badge {
-    margin-left: auto;
     font-size: 10px;
     font-weight: 600;
+    padding: 2px 10px;
+    margin-left: auto;
+    white-space: nowrap;
+    border-radius: 20px;
     letter-spacing: .5px;
     text-transform: none;
     color: rgba(255,255,255,.65);
     background: rgba(255,255,255,.1);
     border: 1px solid rgba(255,255,255,.2);
-    border-radius: 20px;
-    padding: 2px 10px;
-    white-space: nowrap;
 }
 
 .act-sub-badge {
-    margin-left: auto;
     font-size: 10px;
     font-weight: 400;
+    margin-left: auto;
+    font-style: italic;
     letter-spacing: .3px;
     text-transform: none;
     color: rgba(255,255,255,.55);
-    font-style: italic;
 }
 
-/* ── Aviso "selecciona turno" ──────────────────────────────── */
+/* Aviso "selecciona turno" */
 .act-aviso-turno {
-    display: flex;
-    align-items: center;
     gap: 8px;
-    padding: 10px 18px;
+    display: flex;
     font-size: 12px;
-    color: var(--azul-700);
+    padding: 10px 18px;
+    align-items: center;
     background: #EDF2FB;
+    color: var(--azul-700);
     border-bottom: 1px dashed var(--azul-200);
 }
+
 .act-aviso-turno svg { color: var(--azul-500); }
 
-/* ── Tabla de actividades ─────────────────────────────────── */
-.act-tabla {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 12.5px;
-}
+/*  Tabla de actividades  */
+.act-tabla { width: 100%; font-size: 12.5px; border-collapse: collapse; }
 
 .act-tabla thead th {
-    padding: 6px 12px;
     font-size: 9.5px;
     font-weight: 700;
+    text-align: left;
+    padding: 6px 12px;
     letter-spacing: .7px;
-    text-transform: uppercase;
     color: var(--azul-700);
+    text-transform: uppercase;
     background: var(--azul-50);
     border-bottom: 1.5px solid var(--azul-200);
-    text-align: left;
 }
 
 .act-tabla thead th.act-col-accion { text-align: center; }
 
-/* ── Columnas ─────────────────────────────────────────────── */
+/* Columnas */
 .act-col-letra  { width: 48px;  text-align: center; padding: 0 6px; }
+
 .act-col-nombre { padding: 0 8px; }
+
 .act-col-accion { width: 96px;  text-align: center; }
 
-/* ── Filas ────────────────────────────────────────────────── */
-.act-fila {
-    border-bottom: 1px solid #eef1f8;
-    transition: background .12s;
-    cursor: default;
-}
+/* Filas */
+.act-fila { cursor: default; transition: background .12s; border-bottom: 1px solid #eef1f8; }
+
 .act-fila:last-child { border-bottom: none; }
+
 .act-fila:hover { background: #f4f8ff; }
 
-.act-fila td {
-    padding: 8px 12px;
-    vertical-align: middle;
-}
+.act-fila td { padding: 8px 12px; vertical-align: middle; }
+
 .act-fila td.act-col-letra { vertical-align: middle; text-align: center; }
 
 /* Badge de letra (A, B, C…) */
 .act-letra-badge {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
     width: 22px;
     height: 22px;
-    border-radius: 50%;
+    flex-shrink: 0;
     font-size: 11px;
     font-weight: 700;
-    flex-shrink: 0;
+    border-radius: 50%;
+    align-items: center;
+    display: inline-flex;
+    justify-content: center;
 }
-.act-letra-badge--obligatoria {
-    color: #fff;
-    background: var(--azul-600, #2563c4);
-}
-.act-letra-badge--opcional {
-    color: var(--azul-700);
-    background: var(--azul-100, #dbeafe);
-    border: 1px solid var(--azul-300, #93c5fd);
-}
+
+.act-letra-badge--obligatoria { color: #fff; background: var(--azul-600, #2563c4); }
+
+.act-letra-badge--opcional { color: var(--azul-700); background: var(--azul-100, #dbeafe); border: 1px solid var(--azul-300, #93c5fd); }
 
 /* Nombre de la actividad */
 .act-nombre {
     display: block;
-    font-weight: 600;
-    color: var(--gris-900);
     cursor: pointer;
+    font-weight: 600;
     transition: color .12s;
+    color: var(--gris-900);
 }
+
 .act-nombre:hover { color: var(--azul-700); text-decoration: underline; }
 
 /* Resumen breve de la descripción */
@@ -1275,57 +1320,51 @@ body {
     display: block;
     margin-top: 2px;
     font-size: 11px;
-    color: var(--gris-400);
     line-height: 1.4;
     font-style: italic;
+    color: var(--gris-400);
 }
 
-/* ── Botón "Agregar" ─────────────────────────────────────── */
+/* Botón "Agregar" */
 .btn-act-agregar {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
     gap: 5px;
-    padding: 5px 12px;
     font-size: 11px;
-    font-weight: 600;
-    font-family: var(--font-body);
     cursor: pointer;
+    font-weight: 600;
+    padding: 5px 12px;
+    align-items: center;
     white-space: nowrap;
+    display: inline-flex;
     color: var(--azul-700);
+    justify-content: center;
     background: var(--azul-50);
-    border: 1px solid var(--azul-300, #93c5fd);
     border-radius: var(--r-sm);
+    font-family: var(--font-body);
+    border: 1px solid var(--azul-300, #93c5fd);
     transition: background .12s, border-color .12s, transform .1s, color .12s;
 }
-.btn-act-agregar:hover {
-    background: var(--azul-100);
-    border-color: var(--azul-500);
-    color: var(--azul-800);
-}
+
+.btn-act-agregar:hover { color: var(--azul-800); background: var(--azul-100); border-color: var(--azul-500); }
+
 .btn-act-agregar:active { transform: scale(.96); }
 
 /* Estado: recién agregado */
-.btn-act-agregado {
-    background: #d1fae5 !important;
-    border-color: #34d399 !important;
-    color: #065f46 !important;
-}
+.btn-act-agregado { color: #065f46 !important; background: #d1fae5 !important; border-color: #34d399 !important; }
 
-/* ── Popup de descripción completa ───────────────────────── */
+/* Popup de descripción completa */
 .act-desc-popup {
-    position: fixed;
-    bottom: 80px;        /* encima de la action-bar */
     left: 50%;
-    transform: translateX(-50%);
+    bottom: 80px;        /* encima de la action-bar */
     z-index: 9999;
-    width: min(520px, 90vw);
-    background: #fff;
-    border: 1px solid var(--azul-200);
-    border-radius: 8px;
-    box-shadow: 0 8px 32px rgba(13,27,62,.18), 0 2px 8px rgba(13,27,62,.10);
-    animation: actPopupIn .18s ease;
+    position: fixed;
     overflow: hidden;
+    background: #fff;
+    border-radius: 8px;
+    width: min(520px, 90vw);
+    transform: translateX(-50%);
+    animation: actPopupIn .18s ease;
+    border: 1px solid var(--azul-200);
+    box-shadow: 0 8px 32px rgba(13,27,62,.18), 0 2px 8px rgba(13,27,62,.10);
 }
 
 @keyframes actPopupIn {
@@ -1334,130 +1373,109 @@ body {
 }
 
 .act-desc-popup-header {
+    gap: 10px;
+    color: #fff;
     display: flex;
+    font-size: 12px;
+    padding: 10px 14px;
     align-items: center;
     justify-content: space-between;
-    padding: 10px 14px;
     background: var(--azul-800, #1e4888);
-    color: #fff;
-    font-size: 12px;
-    gap: 10px;
 }
 
 .act-desc-popup-close {
-    background: none;
     border: none;
-    color: rgba(255,255,255,.7);
+    line-height: 1;
+    padding: 0 2px;
     cursor: pointer;
     font-size: 14px;
-    padding: 0 2px;
-    line-height: 1;
+    background: none;
     transition: color .1s;
+    color: rgba(255,255,255,.7);
     font-family: var(--font-body);
 }
+
 .act-desc-popup-close:hover { color: #fff; }
 
 .act-desc-popup-body {
+    margin: 0;
+    line-height: 1.6;
     padding: 12px 14px;
     font-size: 12.5px;
-    line-height: 1.6;
     color: var(--gris-800);
-    margin: 0;
 }
 
 .act-desc-popup-footer {
-    padding: 8px 14px 12px;
     display: flex;
+    padding: 8px 14px 12px;
     justify-content: flex-end;
     border-top: 1px solid var(--azul-100);
 }
 
 /* Botón "Usar esta descripción" dentro del popup */
 .btn-act-usar {
-    display: inline-flex;
-    align-items: center;
     gap: 5px;
+    border: none;
+    color: #fff;
+    cursor: pointer;
+    font-weight: 600;
     padding: 6px 14px;
     font-size: 11.5px;
-    font-weight: 600;
-    font-family: var(--font-body);
-    cursor: pointer;
-    color: #fff;
-    background: var(--azul-600, #2563c4);
-    border: none;
+    align-items: center;
+    display: inline-flex;
     border-radius: var(--r-sm);
+    font-family: var(--font-body);
+    background: var(--azul-600, #2563c4);
     transition: background .12s, transform .1s;
 }
+
 .btn-act-usar:hover { background: var(--azul-700); }
+
 .btn-act-usar:active { transform: scale(.97); }
 
-/* ── Fila nueva: animación de entrada ────────────────────── */
-.act-fila-nueva {
-    animation: actFilaNueva .5s ease;
-}
+/* Fila nueva: animación de entrada */
+.act-fila-nueva { animation: actFilaNueva .5s ease; }
+
 @keyframes actFilaNueva {
     0%   { background: #dbeafe; }
     100% { background: transparent; }
 }
 
-/* ── Impresión: el panel de actividades se oculta en el @media print principal ──────────── */
+/* Impresión: el panel de actividades se oculta en el @media print principal */
+/* Actividades: ajustes en tablet/móvil cuando los sidebars pasan a columna única */
+@media (max-width: 991.98px) { /* Popup: más espacio en tablet */ .act-desc-popup { width: min(480px, 92vw); bottom: 76px; } }
 
-/* ── Responsive ─────────────────────────────────────────── */
-@media (max-width: 700px) {
-    .act-panel-header { padding: 8px 12px; gap: 6px; }
-    .act-turno-badge, .act-sub-badge { display: none; }
-    .act-desc-preview { display: none; }
-    .act-tabla thead { display: none; }
-    .act-fila td { display: block; padding: 4px 10px; }
-    .act-fila td.act-col-letra { display: inline-block; }
-    .act-fila td.act-col-nombre { display: inline-block; width: calc(100% - 44px); }
-    .act-fila td.act-col-accion { text-align: left; padding-bottom: 8px; }
-    .act-desc-popup { bottom: 70px; }
-}
+@media (max-width: 575.98px) { .act-desc-popup { bottom: 68px; } }
 
 /* ESTILOS DE IMPRESIÓN @media print */
 @media print {
-
-    /* ── Página A4 ── */
+    /* Página A4 */
     @page { size: A4; margin: 10mm 12mm; }
-
-    /* ── Forzar colores de fondo ── */
+    /* Forzar colores de fondo */
     * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
-
-    /* ── BASE ── */
-    body          { padding: 0 !important; background: #fff !important; font-size: 10pt; }
-    .page-wrapper { display: block !important; max-width: 100% !important; margin: 0 !important; }
-    .documento    { border: none !important; box-shadow: none !important; border-radius: 0 !important; animation: none !important; overflow: visible !important; }
-
-    /* ── OCULTAR: sidebars, controles e interactivos ── */
-    .act-sidebar,
-    .action-bar,
-    .btn-agregar-wrap,
-    .btn-eliminar,
-    .logo-hint,
-    .url-imagen-wrap,
-    .url-dimensiones,
-    .btn-cargar-pc,
-    .url-error,
-    .fotos-indicador,
-    .btn-del-foto,
-    .msg-vacio,
-    .asterisco-obligatorio,
-    .act-desc-popup { display: none !important; }
-
-    /* ── HEADER: respetar el padding/margin del autor ── */
+    /* BASE */
+    body { padding: 0 !important; background: #fff !important; font-size: 10pt; }
+    .documento { border: none !important; box-shadow: none !important; border-radius: 0 !important; animation: none !important; overflow: visible !important; }
+    /* Bootstrap: reset container en impresión */
+    .container-fluid { padding: 0 !important; }
+    .row { margin: 0 !important; display: block !important; }
+    /* Columna central ocupa todo el ancho */
+    #colDocumento { width: 100% !important; max-width: 100% !important; flex: none !important; padding: 0 !important; }
+    /* Columnas laterales ocultas (complementa d-print-none de Bootstrap) */
+    #colObligatorias, #colOpcionales    { display: none !important; }
+    /*  OCULTAR: sidebars, controles e interactivos  */
+    .act-sidebar, .action-bar, .btn-agregar-wrap, .btn-eliminar, .logo-hint, .url-imagen-wrap, .url-dimensiones, .btn-cargar-pc, .url-error, .fotos-indicador, .btn-del-foto, .msg-vacio, .asterisco-obligatorio, .act-desc-popup { display: none !important; }
+    /*  HEADER: layout horizontal en impresión  */
     .doc-header {
         display: flex !important;
+        gap: var(--sp-4) !important;
+        padding: 14px 20px !important;
         flex-direction: row !important;
         align-items: center !important;
         justify-content: space-between !important;
         background: var(--c-header) !important;
-        margin-left: -60px !important;
-        padding: 14px 70px !important;
-        gap: var(--sp-4) !important;
     }
-
-    /* ── TURNO PILL: ocultar div decorativo, renderizar el select visible ── */
+    /* TURNO PILL: ocultar div decorativo, renderizar el select visible */
     .turno-selector-wrap {
         position: relative !important;
         display: inline-flex !important;
@@ -1466,164 +1484,126 @@ body {
     .turno-pill { display: none !important; }
     .turno-select {
         opacity: 1 !important;
-        position: static !important;
-        display: inline-block !important;
         width: auto !important;
         height: auto !important;
         font-size: 13px !important;
         font-weight: 600 !important;
-        font-family: var(--font-body) !important;
+        appearance: none !important;
+        position: static !important;
+        padding: 4px 12px !important;
         color: var(--blanco) !important;
+        display: inline-block !important;
+        -webkit-appearance: none !important;
+        border-radius: var(--r-sm) !important;
+        font-family: var(--font-body) !important;
         background: rgba(255,255,255,.12) !important;
         border: 1px solid rgba(255,255,255,.28) !important;
-        border-radius: var(--r-sm) !important;
-        padding: 4px 12px !important;
-        appearance: none !important;
-        -webkit-appearance: none !important;
     }
-
-    /* ── BARRA FECHA / CIUDAD ── */
-    .fecha-bar {
-        background: var(--c-fecha-bar) !important;
-        border-bottom: 2px solid var(--c-acento) !important;
-    }
-    .fecha-field input {
-        color: var(--blanco) !important;
-        background: rgba(255,255,255,.1) !important;
-        border: 1px solid rgba(255,255,255,.2) !important;
-        box-shadow: none !important;
-    }
-
-    /* ── CABECERAS DE SECCIÓN ── */
-    .seccion-header {
-        background: linear-gradient(90deg, var(--c-seccion-1a) 0%, var(--c-seccion-1b) 100%) !important;
-    }
-    .seccion-header--pendientes {
-        background: linear-gradient(90deg, var(--c-seccion-2a) 0%, var(--c-seccion-2b) 100%) !important;
-    }
+    /* BARRA FECHA / CIUDAD */
+    .fecha-bar { background: var(--c-fecha-bar) !important; border-bottom: 2px solid var(--c-acento) !important; }
+    .fecha-field input { box-shadow: none !important; color: var(--blanco) !important; background: rgba(255,255,255,.1) !important; border: 1px solid rgba(255,255,255,.2) !important; }
+    /* CABECERAS DE SECCIÓN */
+    .seccion-header { background: linear-gradient(90deg, var(--c-seccion-1a) 0%, var(--c-seccion-1b) 100%) !important; }
+    .seccion-header--pendientes { background: linear-gradient(90deg, var(--c-seccion-2a) 0%, var(--c-seccion-2b) 100%) !important; }
     .seccion-titulo { background: var(--azul-800) !important; }
-
-    /* ── TABLA DE COLUMNAS: mantener grid y fondo ── */
-    .tabla-cols, .tabla-cols--pend {
-        background: var(--azul-50) !important;
-        border-bottom: 1.5px solid var(--azul-200) !important;
-        display: grid !important;
-    }
-
-    /* ── FILAS: preservar grid exacto de pantalla ── */
-    .tarea-grid {
-        display: grid !important;
-        grid-template-columns: 160px 120px 1fr 76px !important;
-        padding: 0 14px !important;
-    }
-    .pendiente-grid {
-        display: grid !important;
-        grid-template-columns: 120px 1fr 1fr 76px !important;
-        padding: 0 14px !important;
-    }
+    /*  TABLA DE COLUMNAS: mantener grid y fondo  */
+    .tabla-cols, .tabla-cols--pend { display: grid !important; background: var(--azul-50) !important; border-bottom: 1.5px solid var(--azul-200) !important; }
+    /* FILAS: preservar grid exacto de pantalla */
+    .tarea-grid { display: grid !important; padding: 0 14px !important; grid-template-columns: 160px 120px 1fr 76px !important }
+    .pendiente-grid { display: grid !important; padding: 0 14px !important; grid-template-columns: 120px 1fr 1fr 76px !important; }
     .tarea-fila, .pendiente-fila { page-break-inside: avoid; border-bottom: 1px solid #e5eaf5 !important; }
-
-    /* ── CELDAS: mantener estilos visuales de pantalla ── */
-    .t-cell {
-        border-right: 1px solid #e5eaf5 !important;
-        padding: 8px 10px !important;
-    }
+    /* CELDAS: mantener estilos visuales de pantalla */
+    .t-cell { padding: 8px 10px !important; border-right: 1px solid #e5eaf5 !important; }
     .t-cell:last-child { border-right: none !important; }
-
-    /* ── INPUTS / TEXTAREA dentro de celdas: mantener apariencia de pantalla ── */
-    .t-cell input[type="text"],
-    .t-cell input[type="time"],
-    .t-cell textarea {
+    /* INPUTS / TEXTAREA dentro de celdas: mantener apariencia de pantalla */
+    .t-cell input[type="text"], .t-cell input[type="time"], .t-cell textarea {
+        width: 100% !important;
+        resize: none !important;
         font-size: 11px !important;
-        color: var(--gris-900) !important;
-        background: var(--gris-50) !important;
-        border: 1px solid var(--gris-300) !important;
-        border-radius: var(--r-sm) !important;
         padding: 4px 6px !important;
         box-shadow: none !important;
-        resize: none !important;
-        width: 100% !important;
+        color: var(--gris-900) !important;
+        background: var(--gris-50) !important;
+        border-radius: var(--r-sm) !important;
+        border: 1px solid var(--gris-300) !important;
     }
-
-    /* ── ZONA DE FOTOS: solo mostrar imágenes, sin controles ── */
+    /* ZONA DE FOTOS: solo mostrar imágenes, sin controles */
     .tarea-fotos-row {
         display: flex !important;
         flex-wrap: wrap !important;
         gap: var(--sp-2) !important;
         padding: 6px 14px 8px !important;
         background: #f6f9fe !important;
-        border-top: 1px dashed var(--azul-200) !important;
         justify-content: flex-start !important;
+        border-top: 1px dashed var(--azul-200) !important;
     }
-
-    /* ── THUMBNAILS: respetar dimensiones que puso el usuario via JS ── */
+    /* PIES DE FOTO: visibles en impresión, estilo limpio */
+    .foto-caption-wrap { display: flex !important; width: 100% !important; }
+    .foto-caption {
+        width: 100% !important;
+        height: auto !important;
+        resize: none !important;
+        border: none !important;
+        display: block !important;
+        font-size: 10pt !important;
+        padding: 3px 4px !important;
+        color: #374151 !important;
+        overflow: visible !important;
+        text-align: center !important;
+        font-style: italic !important;
+        background: transparent !important;
+    }
+    /* THUMBNAILS: respetar dimensiones que puso el usuario via JS */
     .preview-thumb {
-        position: relative !important;
+        page-break-inside: avoid;
         overflow: hidden !important;
+        box-shadow: none !important;
+        position: relative !important;
         border-radius: var(--r-sm) !important;
         border: 1px solid var(--azul-200) !important;
-        box-shadow: none !important;
-        page-break-inside: avoid;
-        /* width y height los controla el inline style del JS */
     }
-    .preview-thumb img {
-        width: 100% !important;
-        height: 100% !important;
-        object-fit: cover !important;
-        display: block !important;
-    }
+    .preview-thumb img { width: 100% !important; height: 100% !important; display: block !important; object-fit: cover !important; }
     .previews-grid {
+        gap: 6px !important;
         width: 100% !important;
         display: flex !important;
         flex-wrap: wrap !important;
-        gap: 6px !important;
         justify-content: flex-start !important;
         align-items: flex-start !important;
     }
-
-    /* ── SECCIÓN FIRMAS ── */
-    .firmas-grid {
-        display: grid !important;
-        grid-template-columns: 1fr 1fr !important;
-        background: var(--gris-50) !important;
-    }
+    /* SECCIÓN FIRMAS */
+    .firmas-grid { display: grid !important; background: var(--gris-50) !important; grid-template-columns: 1fr 1fr !important; }
     .linea-firma { margin-top: 28pt; border-top: 1.5px solid #374151 !important; }
-
-    /* ── CAMPOS DE FIRMA — select y cédula: texto limpio sobre línea ── */
+    /* CAMPOS DE FIRMA — select y cédula: texto limpio sobre línea */
     .campo-firma select.campo-firma-select {
-        color: var(--gris-900) !important;
-        background: transparent !important;
-        background-image: none !important;
+        width: 100% !important;
         border: none !important;
-        border-bottom: 1px solid var(--gris-400) !important;
-        border-radius: 0 !important;
         padding: 2px 0 !important;
+        font-size: 12px !important;
+        border-radius: 0 !important;
         box-shadow: none !important;
         appearance: none !important;
-        -webkit-appearance: none !important;
-        font-size: 12px !important;
         font-weight: 600 !important;
-        width: 100% !important;
+        color: var(--gris-900) !important;
+        background-image: none !important;
+        background: transparent !important;
+        -webkit-appearance: none !important;
+        border-bottom: 1px solid var(--gris-400) !important;
     }
     .campo-firma input.campo-firma-cedula {
-        color: var(--gris-900) !important;
-        background: transparent !important;
+        width: 100% !important;
         border: none !important;
-        border-bottom: 1px solid var(--gris-400) !important;
-        border-radius: 0 !important;
         padding: 2px 0 !important;
-        box-shadow: none !important;
         font-size: 12px !important;
         font-weight: 600 !important;
-        width: 100% !important;
-    }
-
-    /* ── ERRORES DE VALIDACIÓN: ocultar en impresión ── */
-    .campo-error {
-        border-color: transparent !important;
+        border-radius: 0 !important;
         box-shadow: none !important;
+        color: var(--gris-900) !important;
         background: transparent !important;
+        border-bottom: 1px solid var(--gris-400) !important;
     }
+    /* ERRORES DE VALIDACIÓN: ocultar en impresión */
+    .campo-error { box-shadow: none !important; background: transparent !important; border-color: transparent !important; }
 }
 
 /* Etiquetas "Anchura" / "Altura" */
@@ -1686,96 +1666,149 @@ body {
 
 .btn-cargar-pc:active { transform: scale(.97); }
 
-.url-dimensiones {
-    margin-left: -2rem;
-    padding: 5px 10px 5px;
-}
+.url-dimensiones { margin-left: -2rem; padding: 5px 10px 5px; }
 
-/* (Ocultar zona de carga ya consolidado en @media print principal) */
+/* Ocultar zona de carga ya consolidado en @media print principal) */
+/* Ajustes en @media (max-width: 700px) */
+@media (max-width: 700px) { .dims-input { width: 60px; } .url-dimensiones { gap: var(--sp-1); } }
 
-/* ── Ajustes en @media (max-width: 700px) ── */
-@media (max-width: 700px) {
-    .url-dimensiones { gap: var(--sp-1); }
-    .dims-input { width: 60px; }
-}
-/* ── SELECTS Y CÉDULA DE ANALISTAS (estilo pill del turno, adaptado a contexto claro) ── */
+/* SELECTS Y CÉDULA DE ANALISTAS (estilo pill del turno, adaptado a contexto claro) */
 .campo-firma select.campo-firma-select {
     width: 100%;
     outline: none;
+    cursor: pointer;
     font-size: 13px;
     font-weight: 600;
-    cursor: pointer;
-    padding: 7px 32px 7px 12px;
+    appearance: none;
     color: var(--blanco);
-    background: var(--azul-800);
+    -webkit-appearance: none;
     border-radius: var(--r-sm);
+    padding: 7px 32px 7px 12px;
+    background-size: 16px 16px;
+    background: var(--azul-800);
+    background-repeat: no-repeat;
     font-family: var(--font-body);
     border: 1px solid var(--azul-500);
-    transition: border-color .15s, box-shadow .15s;
-    appearance: none;
-    -webkit-appearance: none;
-    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 16 16' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M4 6l4 4 4-4' stroke='rgba(255,255,255,.55)' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
-    background-repeat: no-repeat;
     background-position: right 10px center;
-    background-size: 16px 16px;
+    transition: border-color .15s, box-shadow .15s;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 16 16' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M4 6l4 4 4-4' stroke='rgba(255,255,255,.55)' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
 }
 
-.campo-firma select.campo-firma-select:focus {
-    border-color: var(--azul-200);
-    box-shadow: 0 0 0 3px rgba(37, 99, 196, .18);
-}
+.campo-firma select.campo-firma-select:focus { border-color: var(--azul-200); box-shadow: 0 0 0 3px rgba(37, 99, 196, .18); }
 
 .campo-firma select.campo-firma-select option { color: var(--gris-900); background: var(--blanco); }
 
 .campo-firma input.campo-firma-cedula {
     width: 100%;
     outline: none;
+    cursor: default;
     font-size: 13px;
     font-weight: 600;
     padding: 7px 12px;
     color: var(--blanco);
+    letter-spacing: .5px;
     background: var(--azul-800);
     border-radius: var(--r-sm);
     font-family: var(--font-body);
     border: 1px solid var(--azul-800);
-    letter-spacing: .5px;
-    cursor: default;
 }
 
 .campo-firma input.campo-firma-cedula::placeholder { font-style: italic; color: rgba(255, 255, 255, .3); font-weight: 400; }
 
 /* (Impresión de analistas consolidada en @media print principal) */
-
-/* ── ASTERISCO DE CAMPO OBLIGATORIO ── */
+/* ASTERISCO DE CAMPO OBLIGATORIO */
 .asterisco-obligatorio {
+    line-height: 1;
     color: #e53e3e;
     font-weight: 700;
     font-size: .95em;
     margin-left: 2px;
-    line-height: 1;
 }
 
-/* ── CAMPO CON ERROR DE VALIDACIÓN ── */
-.campo-error {
-    border-color: #e53e3e !important;
-    box-shadow: 0 0 0 3px rgba(229, 62, 62, .15) !important;
-    background-color: #fff5f5 !important;
+/* CAMPO CON ERROR DE VALIDACIÓN */
+.campo-error { border-color: #e53e3e !important; background-color: #fff5f5 !important; box-shadow: 0 0 0 3px rgba(229, 62, 62, .15) !important; }
+
+.tarea-fotos-row.campo-error { background: #fff5f5 !important; border-top-color: #e53e3e !important; box-shadow: inset 0 0 0 1.5px #e53e3e !important; }
+
+/* Analistas: ajuste en móvil (Bootstrap ya oculta los sidebars) */
+@media (max-width: 575.98px) { .campo-firma select.campo-firma-select, .campo-firma input.campo-firma-cedula { font-size: 12px; padding: 6px 10px; } }
+
+/* TEMPORIZADORES DE SESIÓN */
+.tm-footer-container {
+    gap: 20px;
+    display: flex;
+    max-width: 480px;
+    padding: 8px 16px;
+    align-items: center;
+    margin: 8px auto 4px;
+    justify-content: center;
+    border-radius: var(--r-md);
+    font-family: var(--font-body);
+    background: rgba(0, 0, 0, 0.06);
+    border: 1px solid rgba(0, 0, 0, 0.08);
 }
 
-.tarea-fotos-row.campo-error {
-    border-top-color: #e53e3e !important;
-    background: #fff5f5 !important;
-    box-shadow: inset 0 0 0 1.5px #e53e3e !important;
+/* Cada bloque de temporizador (icono + label + display) */
+.tm-bloque { gap: 6px; display: flex; align-items: center; color: var(--gris-500); }
+
+/* Variante de alerta (Fase 2: 30 min) */
+.tm-bloque--alerta { color: var(--amber-600); }
+
+.tm-icono { opacity: 0.7; display: flex; flex-shrink: 0; align-items: center; }
+
+.tm-label { font-size: 11px; font-weight: 500; white-space: nowrap; letter-spacing: 0.3px; }
+
+/* Display principal - uente monoespaciada tipo digital */
+.tm-display {
+    min-width: 66px;
+    font-size: 14px;
+    font-weight: 700;
+    text-align: right;
+    letter-spacing: 1.5px;
+    color: var(--azul-700);
+    font-family: 'Courier New', 'Lucida Console', monospace;
 }
 
-/* ── RESPONSIVE ≤ 700px — ajustes para selects de analistas ── */
-@media (max-width: 700px) {
-    .campo-firma select.campo-firma-select,
-    .campo-firma input.campo-firma-cedula { font-size: 12px; padding: 6px 10px; }
-    .firmas-grid { padding: var(--sp-3); gap: var(--sp-4); }
-    /* Sidebars: ocultar en móvil, documento ocupa todo el ancho */
-    .act-sidebar { display: none; }
-    .page-wrapper { grid-template-columns: 1fr; }
+/* Display en modo alerta */
+.tm-display--alerta { color: var(--amber-600); animation: tm-parpadeo 1s step-end infinite }
+
+/* Parpadeo sutil para el temporizador de alerta */
+@keyframes tm-parpadeo { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+
+/* Separador visual entre los dos bloques si ambos fueran visibles */
+.tm-bloque + .tm-bloque { padding-left: 20px; border-left: 1px solid rgba(0, 0, 0, 0.1); }
+
+/* Responsive: apilar verticalmente en móvil */
+@media (max-width: 480px) {
+    .tm-footer-container { gap: 6px; max-width: 100%; margin: 6px 8px 2px; flex-direction: column; }
+    .tm-bloque + .tm-bloque { padding-left: 0; padding-top: 6px; border-left: none; border-top: 1px solid rgba(0, 0, 0, 0.1); }
 }
 
-/* (Correcciones de impresión consolidadas en @media print principal) */
+.ab-timer {
+    gap: 6px;
+    display: flex;
+    font-size: 13px;
+    font-weight: 700;
+    padding: 5px 12px;
+    user-select: none;
+    border-radius: 6px;
+    align-items: center;
+    white-space: nowrap;
+    pointer-events: none;
+    letter-spacing: 1.5px;
+    color: rgba(255, 255, 255, 0.85);
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    font-family: 'Courier New', 'Lucida Console', monospace;
+    transition: color .3s, border-color .3s, background .3s;
+}
+
+/* Estado de alerta - Fase 2 (30 min de limpieza) */
+.ab-timer.alerta { color: #FAC775; background: rgba(250, 199, 117, 0.1); border-color: rgba(250, 199, 117, 0.4); animation: ab-parpadeo 1s step-end infinite; }
+
+@keyframes ab-parpadeo {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
+@media print { .ab-timer { display: none !important; } }

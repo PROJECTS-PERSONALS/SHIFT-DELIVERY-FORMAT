@@ -5,79 +5,51 @@
 		<meta charset="UTF-8">
 		<meta name="viewport" content="width=device-width, initial-scale=1.0">
 		<title> Entrega de Turno 24H </title>
-		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-		<link rel="preconnect" href="https://fonts.googleapis.com">
-		<!-- Fuentes: carga no bloqueante para mejorar tiempo de renderizado -->
-		<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Source+Sans+3:wght@300;400;500;600;700&display=swap" media="print" onload="this.media='all'">
-		<noscript>
-			<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Source+Sans+3:wght@300;400;500;600;700&display=swap">
-		</noscript>
-		<!-- Bootstrap 5 — solo layout y utilities; colores corporativos en styles.css -->
-	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
-	      integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH"
-	      crossorigin="anonymous">
-	<link rel="stylesheet" href="styles.css">
-		<!-- Script con defer -->
-		<script src="script.js" defer> </script>
+		<link rel="preload" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" as="style" crossorigin="anonymous">
+		<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
+		<link rel="stylesheet" href="./styles.css">
+		<script src="./script.js" defer> </script>
 	</head>
 	<body>
-		<!-- ═══════════════════════════════════════════════════════════
-		     LAYOUT PRINCIPAL — Bootstrap 5 container-fluid
-		     col-lg-3 | col-lg-6 | col-lg-3
-		     Los paneles laterales tienen d-print-none — no se imprimen
-		═══════════════════════════════════════════════════════════ -->
 		<div class="container-fluid px-2 px-lg-3">
 		<div class="row g-3 align-items-start">
-
-			<!-- ─── COLUMNA IZQUIERDA: Actividades Obligatorias ─── -->
+			<!-- COLUMNA IZQUIERDA: Actividades Obligatorias -->
 			<div class="col-lg-3 d-none d-lg-block d-print-none" id="colObligatorias">
 				<aside class="act-sidebar act-sidebar--oblig h-100" id="panelObligatorias" aria-label="Actividades obligatorias">
-
-					<!-- Header del panel -->
 					<div class="act-sidebar-header act-sidebar-header--oblig">
 						<svg class="seccion-icon" viewBox="0 0 20 20" fill="none" aria-hidden="true">
 							<circle cx="10" cy="10" r="8.5" stroke="currentColor" stroke-width="1.6"/>
 							<path d="M6.5 10l2.5 2.5 4.5-5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
 						</svg>
-						<span>OBLIGATORIAS</span>
-						<span class="act-turno-badge ms-auto" id="actTurnoBadge">— sin turno —</span>
+						<span> OBLIGATORIAS </span>
+						<span class="act-turno-badge ms-auto" id="actTurnoBadge"> sin turno </span>
 					</div>
-
-					<!-- Aviso sin turno -->
 					<div class="act-aviso-turno" id="actAvisoTurno">
 						<svg viewBox="0 0 20 20" fill="none" aria-hidden="true" style="width:13px;height:13px;flex-shrink:0">
 							<circle cx="10" cy="10" r="8" stroke="currentColor" stroke-width="1.5"/>
 							<line x1="10" y1="6.5" x2="10" y2="11" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
 							<circle cx="10" cy="13.5" r="1" fill="currentColor"/>
 						</svg>
-						<span>Selecciona un turno para ver las actividades.</span>
+						<span> Selecciona un turno para ver las actividades </span>
 					</div>
-
-					<!-- Tabla de actividades obligatorias -->
 					<div class="act-tabla-wrap">
 						<table class="act-tabla w-100" id="tablaObligatorias" aria-label="Actividades obligatorias del turno">
 							<thead>
 								<tr>
-									<th class="act-col-letra">ID</th>
-									<th class="act-col-nombre">Actividad</th>
-									<th class="act-col-accion text-center">+</th>
+									<th class="act-col-letra"> ID </th>
+									<th class="act-col-nombre"> Actividad </th>
+									<th class="act-col-accion text-center"> + </th>
 								</tr>
 							</thead>
-							<tbody id="bodyObligatorias">
-								<!-- Filas generadas por JS según turno -->
-							</tbody>
+							<tbody id="bodyObligatorias"> </tbody>
 						</table>
 					</div>
-
 				</aside>
-			</div><!-- /col izquierda -->
-
-			<!-- ─── COLUMNA CENTRAL: Documento principal ─── -->
+			</div>
+			<!-- COLUMNA CENTRAL: Documento principal -->
 			<div class="col-12 col-lg-6 col-print-12" id="colDocumento">
 			<main class="documento" id="documento">
-				<!-- HEADER -->
 				<header class="doc-header">
-					<!-- LOGO 24H FIJO -->
 					<div class="logo-zone logo-zone--static" aria-label="Logo 24H">
 						<div class="logo-24h" id="logo24h">
 							<svg viewBox="0 0 160 80" xmlns="http://www.w3.org/2000/svg" width="86" height="48" aria-hidden="true">
@@ -92,11 +64,10 @@
 							</svg>
 						</div>
 					</div>
-					<!-- TÍTULO + TURNO pill/select -->
 					<div style="flex:1; text-align:center;">
 						<div style="font-size:17px; font-weight:700; letter-spacing:3px; color:#fff; line-height:1;"> ENTREGA DE TURNO </div>
 						<div style="margin-top:5px; display:flex; align-items:center; justify-content:center; gap:8px;">
-							<span style="font-size:10px; color:rgba(255, 255, 255, 0.801); text-transform:uppercase; letter-spacing:.8px;"> Turno: <span class="asterisco-obligatorio">*</span> </span>
+							<span style="font-size:10px; color:rgba(255,255,255,0.801); text-transform:uppercase; letter-spacing:.8px;"> Turno: <span class="asterisco-obligatorio"> * </span> </span>
 							<div class="turno-selector-wrap">
 								<div class="turno-pill" id="turnoPill"> Selecciona un Turno </div>
 								<select id="turnoSelect" class="turno-select" aria-label="Seleccionar turno">
@@ -109,27 +80,24 @@
 					</div>
 					<div class="header-right-spacer" aria-hidden="true"> </div>
 				</header>
-				<!-- BARRA FECHA / CIUDAD -->
 				<div class="fecha-bar" role="region" aria-label="Fecha y ciudad">
 					<div class="fecha-bar-inner">
 						<div class="fecha-field">
 							<label for="ciudadInput"> Ciudad </label>
 							<input type="text" id="ciudadInput" value="Medellín" maxlength="60" autocomplete="off">
 						</div>
-						<!-- <span class="fecha-sep" aria-hidden="true"> , </span> -->
 						<div class="fecha-field fecha-field--date">
 							<label for="fechaInput"> Fecha </label>
 							<div class="fecha-date-wrap"> <input type="date" id="fechaInput"> </div>
 						</div>
 					</div>
 				</div>
-				<!-- SECCIÓN TAREAS REALIZADAS -->
 				<section class="seccion" id="secTareas" aria-labelledby="hTareasRealizadas">
 					<div class="seccion-header"> <h2 id="hTareasRealizadas"> TAREAS REALIZADAS </h2> </div>
 					<div class="tabla-cols" id="tablaColsTareas" role="row" aria-hidden="true">
 						<div class="col-turno"> Turno </div>
-						<div class="col-ticket"> Ticket / Caso <span class="asterisco-obligatorio">*</span> </div>
-						<div class="col-desc"> Descripción de la tarea <span class="asterisco-obligatorio" aria-hidden="true">*</span></div>
+						<div class="col-ticket"> Ticket / Caso <span class="asterisco-obligatorio"> * </span> </div>
+						<div class="col-desc"> Descripción de la tarea <span class="asterisco-obligatorio" aria-hidden="true"> * </span> </div>
 						<div class="col-acciones"> Acciones </div>
 					</div>
 					<div id="listaTareas" role="list"> </div>
@@ -144,12 +112,11 @@
 						</button>
 					</div>
 				</section>
-				<!-- SECCIÓN TAREAS PENDIENTES -->
 				<section class="seccion" id="secPendientes" aria-labelledby="hTareasPendientes">
 					<div class="seccion-header seccion-header--pendientes"> <h2 id="hTareasPendientes"> TAREAS PENDIENTES </h2> </div>
 					<div class="tabla-cols tabla-cols--pend" id="tablaColsPend" role="row" aria-hidden="true">
-						<div class="col-ticket"> Ticket / Caso <span class="asterisco-obligatorio">*</span> </div>
-						<div class="col-desc"> Descripción del pendiente <span class="asterisco-obligatorio" aria-hidden="true">*</span></div>
+						<div class="col-ticket"> Ticket / Caso <span class="asterisco-obligatorio"> * </span> </div>
+						<div class="col-desc"> Descripción del pendiente <span class="asterisco-obligatorio" aria-hidden="true"> * </span> </div>
 						<div class="col-motivo"> Motivo por el que queda pendiente </div>
 						<div class="col-acciones"> Acciones </div>
 					</div>
@@ -165,14 +132,13 @@
 						</button>
 					</div>
 				</section>
-				<!-- SECCIÓN RESPONSABLES / FIRMAS -->
 				<section class="seccion" id="secFirmas" aria-labelledby="hFirmas">
 					<div class="seccion-titulo"> <h2 id="hFirmas"> RESPONSABLES </h2> </div>
 					<div class="firmas-grid">
 						<div class="firma-bloque">
 							<div class="firma-titulo"> Empleado Entrante </div>
 							<div class="campo-firma">
-								<label for="entranteNombre"> Nombre completo <span class="asterisco-obligatorio">*</span> </label>
+								<label for="entranteNombre"> Nombre completo <span class="asterisco-obligatorio"> * </span> </label>
 								<select id="entranteNombre" class="campo-firma-select" aria-label="Seleccionar empleado entrante">
 									<option value=""> Selecciona un Analista </option>
 									<option value="Juan Diego Mazo Lezcano"> Juan Diego Mazo Lezcano </option>
@@ -193,7 +159,7 @@
 						<div class="firma-bloque">
 							<div class="firma-titulo"> Empleado Saliente </div>
 							<div class="campo-firma">
-								<label for="salienteNombre"> Nombre completo <span class="asterisco-obligatorio">*</span> </label>
+								<label for="salienteNombre"> Nombre completo <span class="asterisco-obligatorio"> * </span> </label>
 								<select id="salienteNombre" class="campo-firma-select" aria-label="Seleccionar empleado saliente">
 									<option value=""> Selecciona un Analista </option>
 									<option value="Juan Diego Mazo Lezcano"> Juan Diego Mazo Lezcano </option>
@@ -213,53 +179,75 @@
 						</div>
 					</div>
 				</section>
-				<!-- FOOTER -->
 				<footer class="doc-footer">
 					<span> Documento generado digitalmente | Sistema de Entrega de Turno </span>
 					<span id="footerFecha"> </span>
 				</footer>
 			</main>
-			</div><!-- /col central -->
-
-			<!-- ─── COLUMNA DERECHA: Actividades Opcionales ─── -->
+			</div> <!-- /col central -->
+			<!-- COLUMNA DERECHA: Actividades Opcionales -->
 			<div class="col-lg-3 d-none d-lg-block d-print-none" id="colOpcionales">
 				<aside class="act-sidebar act-sidebar--opc h-100" id="panelOpcionales" aria-label="Actividades opcionales">
-
-					<!-- Header del panel -->
 					<div class="act-sidebar-header act-sidebar-header--opc">
 						<svg class="seccion-icon" viewBox="0 0 20 20" fill="none" aria-hidden="true">
 							<rect x="3" y="3" width="14" height="14" rx="3" stroke="currentColor" stroke-width="1.6"/>
 							<path d="M7 10h6M10 7v6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
 						</svg>
-						<span>OPCIONALES</span>
-						<span class="act-sub-badge ms-auto">Todos los turnos</span>
+						<span> OPCIONALES </span>
+						<span class="act-sub-badge ms-auto"> Todos los turnos </span>
 					</div>
-
-					<!-- Tabla de actividades opcionales -->
 					<div class="act-tabla-wrap">
 						<table class="act-tabla w-100" id="tablaOpcionales" aria-label="Actividades opcionales">
 							<thead>
 								<tr>
-									<th class="act-col-letra">ID</th>
-									<th class="act-col-nombre">Actividad</th>
-									<th class="act-col-accion text-center">+</th>
+									<th class="act-col-letra"> ID </th>
+									<th class="act-col-nombre"> Actividad </th>
+									<th class="act-col-accion text-center"> + </th>
 								</tr>
 							</thead>
-							<tbody id="bodyOpcionales">
-								<!-- Generadas por JS — siempre visibles -->
-							</tbody>
+							<tbody id="bodyOpcionales"> </tbody>
 						</table>
 					</div>
-
 				</aside>
-			</div><!-- /col derecha -->
-
-		</div><!-- /row -->
-		</div><!-- /container-fluid -->
-
+			</div>
+		</div> <!-- /row --> </div> <!-- /container-fluid -->
+		<!-- TEMPORIZADORES DE SESIÓN -->
+		<div class="tm-footer-container d-print-none" id="tmFooter" role="timer" aria-live="polite" aria-label="Temporizador de sesión">
+			<!-- Fase 1: turno de 8 horas -->
+			<div class="tm-bloque" id="tmBloque8h">
+				<span class="tm-icono" aria-hidden="true">
+					<svg viewBox="0 0 20 20" fill="none" width="13" height="13">
+						<circle cx="10" cy="10" r="8" stroke="currentColor" stroke-width="1.5"/>
+						<path d="M10 6v4l2.5 2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+					</svg>
+				</span>
+				<span class="tm-label"> Turno activo: </span>
+				<span class="tm-display" id="tmDisplay8h"> 08:00:00 </span>
+			</div>
+			<!-- Fase 2: 30 min de limpieza (hidden por defecto) -->
+			<div class="tm-bloque tm-bloque--alerta" id="tmBloque30m" hidden>
+				<span class="tm-icono" aria-hidden="true">
+					<svg viewBox="0 0 20 20" fill="none" width="13" height="13">
+						<path d="M10 3v1M10 16v1M3 10h1M16 10h1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+						<circle cx="10" cy="10" r="6" stroke="currentColor" stroke-width="1.5"/>
+						<path d="M10 7v3l2 1.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+					</svg>
+				</span>
+				<span class="tm-label"> Limpieza en: </span>
+				<span class="tm-display tm-display--alerta" id="tmDisplay30m"> 00:30:00 </span>
+			</div>
+		</div>
 		<!-- BARRA DE ACCIONES STICKY -->
 		<div class="action-bar" id="actionBar" role="toolbar" aria-label="Acciones del documento">
 			<button class="btn-clear" id="btnClear" type="button" title="Reiniciar todo el formulario"> Limpiar </button>
+			<!-- Temporizador de sesión en la barra de acciones - espejo del footer timer -->
+			<div class="ab-timer" id="abTimer" role="timer" aria-live="polite" aria-label="Tiempo de sesión">
+				<svg viewBox="0 0 20 20" fill="none" width="14" height="14" aria-hidden="true">
+					<circle cx="10" cy="10" r="8" stroke="currentColor" stroke-width="1.5"/>
+					<path d="M10 6v4l2.5 2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+				</svg>
+				<span id="abTimerDisplay"> 08:00:00 </span>
+			</div>
 			<button class="btn-print" id="btnPrint" type="button">
 				<svg viewBox="0 0 20 20" fill="none" aria-hidden="true">
 					<rect x="4" y="2" width="12" height="9" rx="1" stroke="currentColor" stroke-width="1.6"/>
@@ -271,8 +259,6 @@
 				Imprimir
 			</button>
 		</div>
-	<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
-	        integrity="sha384-YvpcrYf0tY3lHB60NNkmXc4s9bIOgUxi8T/jzmkBO04xF3j5wqLG3KubqT8y+IXb"
-	        crossorigin="anonymous"></script>
+		<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI" crossorigin="anonymous"> </script>
 	</body>
 </html>
