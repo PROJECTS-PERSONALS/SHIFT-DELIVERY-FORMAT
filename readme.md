@@ -44,8 +44,8 @@
    - Adjunta **imágenes** (múltiples, redimensiona).
    - **Pendientes** (+ botón).
    - **Responsables** (select analistas → auto-DNI).
-3. **Imprimir**: Botón 🔍 **Imprimir** → valida obligatorios.
-4. **Limpiar**: Botón 🧹 **Limpiar** (reinicia todo).
+3. **Imprimir**: Botón **Imprimir** → valida obligatorios.
+4. **Limpiar**: Botón **Limpiar** (reinicia todo).
 
 **Demo**: `open files/index.html` (macOS/Linux) o arrastra a Chrome.
 
