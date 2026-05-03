@@ -103,7 +103,7 @@
 - **Empleado Saliente**: Selector + DNI automático
 - **Lista hardcodeada de analistas**:
   1. Juan Diego Mazo Lezcano (1020110871)
-  2. Juan José Santana Garzón (1122142959)
+  2. Juan José Santana Garzón (1022142959)
   3. Juan Pablo Gaviria Correa (1152464110)
   4. Julian García Araque (1000401771)
   5. Kevin Daniel Mosquera Cordoba (1076819340)
