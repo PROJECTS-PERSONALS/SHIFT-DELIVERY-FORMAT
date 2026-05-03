@@ -4,7 +4,7 @@
 /* DATOS DE PERSONAL */
 var ANALISTAS = [
 	{ nombre: 'Juan Diego Mazo Lezcano', cedula: '1020110871' },
-	{ nombre: 'Juan José Santana Garzón', cedula: '1122142959' },
+	{ nombre: 'Juan José Santana Garzón', cedula: '1022142959' },
 	{ nombre: 'Juan Pablo Gaviria Correa', cedula: '1152464110' },
 	{ nombre: 'Julian García Araque', cedula: '1000401771' },
 	{ nombre: 'Kevin Daniel Mosquera Cordoba', cedula: '1076819340' },
