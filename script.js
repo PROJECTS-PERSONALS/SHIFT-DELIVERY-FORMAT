@@ -1001,7 +1001,7 @@ function _restaurarEstado() {
 		/* Rellenar cédula */
 		var cedulaEntrante = document.getElementById('estranteDNI');
 		if (cedulaEntrante) {
-			var analistas = { 'Juan Diego Mazo Lezcano': '1020110871', 'Juan José Santana Garzón': '1122142959', 'Juan Pablo Gaviria Correa': '1152464110', 'Julian García Araque': '1000523826', 'Kevin Daniel Mosquera Cordoba': '1076819340', 'William David Jarava Solano': '1104410026', 'Yin Carlos Martinez Perez': '72203802' };
+			var analistas = { 'Juan Diego Mazo Lezcano': '1020110871', 'Juan José Santana Garzón': '1022142959', 'Juan Pablo Gaviria Correa': '1152464110', 'Julian García Araque': '1000523826', 'Kevin Daniel Mosquera Cordoba': '1076819340', 'William David Jarava Solano': '1104410026', 'Yin Carlos Martinez Perez': '72203802' };
 			cedulaEntrante.value = analistas[estado.entrante] || '';
 		}
 	}
@@ -1010,7 +1010,7 @@ function _restaurarEstado() {
 		saliente.value = estado.saliente;
 		var cedulaSaliente = document.getElementById('salienteDNI');
 		if (cedulaSaliente) {
-			var analistas2 = { 'Juan Diego Mazo Lezcano': '1020110871', 'Juan José Santana Garzón': '1122142959', 'Juan Pablo Gaviria Correa': '1152464110', 'Julian García Araque': '1000523826', 'Kevin Daniel Mosquera Cordoba': '1076819340', 'William David Jarava Solano': '1104410026', 'Yin Carlos Martinez Perez': '72203802' };
+			var analistas2 = { 'Juan Diego Mazo Lezcano': '1020110871', 'Juan José Santana Garzón': '1022142959', 'Juan Pablo Gaviria Correa': '1152464110', 'Julian García Araque': '1000523826', 'Kevin Daniel Mosquera Cordoba': '1076819340', 'William David Jarava Solano': '1104410026', 'Yin Carlos Martinez Perez': '72203802' };
 			cedulaEntrante2 = analistas2[estado.saliente] || '';
 			cedulaSaliente.value = cedulaEntrante2;
 		}
