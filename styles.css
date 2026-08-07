@@ -461,7 +461,7 @@ body {
 
 .t-cell select:focus, .t-cell input:focus, .t-cell textarea:focus { background: var(--blanco); border-color: var(--azul-500); box-shadow: 0 0 0 3px rgba(37, 99, 196, .1); }
 
-.t-cell textarea { flex: 1; resize: vertical; min-height: 58px; }
+.t-cell textarea { flex: 1; resize: none; min-height: 58px; overflow: hidden; }
 
 /* Select de turno (dentro de la fila) */
 .t-cell select {
@@ -1447,8 +1447,49 @@ body {
 
 @media (max-width: 575.98px) { .act-desc-popup { bottom: 68px; } }
 
-/* ESTILOS DE IMPRESIÓN @media print */
+/* PRINT-TEXT: div proxy que reemplaza textareas al imprimir.
+   Oculto en pantalla; visible solo en @media print. */
+.print-text {
+    display: none; /* siempre oculto en pantalla */
+}
+
+/* ══════════════════════════════════
+   PRINT STYLES
+══════════════════════════════════ */
 @media print {
+    /* PRINT-TEXT: hereda estilos del textarea que reemplaza */
+    .print-text {
+        display: block !important;
+        width: 100% !important;
+        font-size: 11px !important;
+        line-height: 1.5 !important;
+        color: var(--gris-900) !important;
+        font-family: var(--font-body) !important;
+        white-space: pre-wrap !important;   /* respeta saltos de línea */
+        word-break: break-word !important;
+        overflow: visible !important;
+        padding: 4px 6px !important;
+        background: var(--gris-50) !important;
+        border: 1px solid var(--gris-300) !important;
+        border-radius: var(--r-sm) !important;
+    }
+    /* Caption de foto: estilo diferente al de descripción */
+    .foto-caption-wrap .print-text {
+        font-size: 10pt !important;
+        font-style: italic !important;
+        text-align: center !important;
+        background: transparent !important;
+        border: none !important;
+        color: #374151 !important;
+        padding: 3px 4px !important;
+    }
+    /* Asegurarse de que los textareas originales queden ocultos al imprimir
+       (el JS ya les aplica display:none, pero por si acaso) */
+    #listaTareas textarea,
+    #listaPendientes textarea,
+    .foto-caption {
+        display: none !important;
+    }
     /* Página A4 */
     @page { size: A4; margin: 10mm 12mm; }
     /* Forzar colores de fondo */
