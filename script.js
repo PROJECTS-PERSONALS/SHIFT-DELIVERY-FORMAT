@@ -1,6 +1,26 @@
 // ENTREGA DE TURNO INTERACCIONES/ANIMACIONES
 'use strict';
 
+/* AUTO-RESIZE DE TEXTAREAS
+   Ajusta la altura del textarea al contenido, sin scroll visible.
+   Compatible con @media print: al imprimir el contenido se ve completo.
+   Patrón: colapsar a 'auto' primero para que scrollHeight sea exacto. */
+function autoResize(el) {
+	if (!el || el.tagName !== 'TEXTAREA') return;
+	el.style.height = 'auto';
+	el.style.height = el.scrollHeight + 'px';
+}
+
+/* Activa auto-resize en un textarea dado (evento input + resize inicial) */
+function _activarAutoResize(textarea) {
+	if (!textarea) return;
+	textarea.style.overflowY = 'hidden'; /* ocultar scroll - la altura crece */
+	textarea.style.resize   = 'none';    /* deshabilitar resize manual */
+	textarea.addEventListener('input', function () { autoResize(textarea); });
+	/* Altura inicial en caso de que ya tenga contenido */
+	autoResize(textarea);
+}
+
 /* DATOS DE PERSONAL */
 var ANALISTAS = [
 	{ nombre: 'Juan Diego Mazo Lezcano', cedula: '1020110871' },
@@ -217,6 +237,8 @@ function _insertarOActualizarTareaTurno(turno) {
 	/* Sin zona de imágenes para esta tarea */
 	/* Insertar siempre como PRIMER elemento */
 	contenedor.insertBefore(fila, contenedor.firstChild);
+	/* Auto-resize en el textarea readonly de la tarea de turno */
+	fila.querySelectorAll('textarea').forEach(function (ta) { autoResize(ta); });
 }
 
 /*  TAREA MAESTRA R-000000 "Entrega de turno" (última)  */
@@ -273,6 +295,8 @@ function _insertarOActualizarTareaMaestra() {
 		'</div>';
 	/* Sin zona de imágenes */
 	contenedor.appendChild(fila);
+	/* Auto-resize en el textarea readonly de la tarea maestra */
+	fila.querySelectorAll('textarea').forEach(function (ta) { autoResize(ta); });
 }
 
 /**
@@ -374,6 +398,9 @@ function agregarTarea() {
 		'</div>';
 
 	contenedor.appendChild(fila);
+	/* Activar auto-resize en el textarea de descripción de la tarea */
+	var tareaDescTA = fila.querySelector('textarea.campo-requerido');
+	_activarAutoResize(tareaDescTA);
 	/* Garantizar que la tarea maestra siempre quede al final */
 	_asegurarTareaMaestraAlFinal();
 }
@@ -462,6 +489,7 @@ function cargarImagenArchivo(input, id) {
 				caption.rows = 2;
 				caption.setAttribute('aria-label', 'Descripción de la imagen');
 				caption.addEventListener('input', guardarEstadoDebounced);
+						_activarAutoResize(caption);
 
 				captionWrap.appendChild(caption);
 
@@ -1026,12 +1054,15 @@ function _restaurarEstado() {
 			var inputs = ultima.querySelectorAll('input[type="text"], input[type="time"], textarea:not(.foto-caption)');
 			inputs.forEach(function (inp, i) {
 				if (t.valores[i] !== undefined) inp.value = t.valores[i];
+				/* Recalcular altura tras restaurar el valor */
+				if (inp.tagName === 'TEXTAREA') autoResize(inp);
 			});
 			/* Restaurar captions de imágenes si existen */
 			if (Array.isArray(t.captions) && t.captions.length > 0) {
 				var caps = ultima.querySelectorAll('.foto-caption');
 				caps.forEach(function (c, i) {
 					if (t.captions[i] !== undefined) c.value = t.captions[i];
+					autoResize(c);
 				});
 			}
 			if (t.actId) ultima.setAttribute('data-act-id', t.actId);
@@ -1048,11 +1079,14 @@ function _restaurarEstado() {
 			var inputs = ultima.querySelectorAll('input[type="text"], input[type="time"], textarea:not(.foto-caption)');
 			inputs.forEach(function (inp, i) {
 				if (p.valores[i] !== undefined) inp.value = p.valores[i];
+				/* Recalcular altura tras restaurar el valor */
+				if (inp.tagName === 'TEXTAREA') autoResize(inp);
 			});
 			if (Array.isArray(p.captions) && p.captions.length > 0) {
 				var caps = ultima.querySelectorAll('.foto-caption');
 				caps.forEach(function (c, i) {
 					if (p.captions[i] !== undefined) c.value = p.captions[i];
+					autoResize(c);
 				});
 			}
 		});
@@ -1135,9 +1169,15 @@ function agregarPendiente() {
 			'<div class="previews-grid" id="ppreviews-' + id + '"></div>' +
 		'</div>';
 	contenedor.appendChild(fila);
+	/* Activar auto-resize en los textareas de descripción y motivo del pendiente */
+	fila.querySelectorAll('textarea').forEach(function (ta) {
+		_activarAutoResize(ta);
+	});
 }
 
 /* Helpers reutilizables para zona de imágenes de pendientes */
+/* _crearThumb: versión ligera usada internamente (sin caption).
+   Se conserva por compatibilidad pero ya no se llama desde pendientes. */
 function _crearThumb(url, dataUrl, previews, indicador, dimsEl, dimWEl, dimHEl, errorEl) {
 	var img = new Image();
 	img.onload = function () {
@@ -1182,19 +1222,92 @@ function _crearThumb(url, dataUrl, previews, indicador, dimsEl, dimWEl, dimHEl, 
 	img.src = dataUrl || url;
 }
 
+/* _crearThumbPend: versión completa para pendientes.
+   Igual que cargarImagenArchivo (tareas) — crea preview-item + caption. */
+function _crearThumbPend(dataUrl, previews, indicador, dimsEl, dimWEl, dimHEl, errorEl) {
+	var img = new Image();
+	img.onload = function () {
+		ocultarError(errorEl);
+		var ratio = img.naturalWidth / img.naturalHeight;
+		var w = 600, h = Math.round(600 / ratio);
+
+		/* Contenedor imagen + caption (mismo patrón que tareas) */
+		var item = document.createElement('div');
+		item.className = 'preview-item';
+
+		var wrap = document.createElement('div');
+		wrap.className = 'preview-thumb';
+		wrap.dataset.ratio = ratio;
+		wrap.style.width = w + 'px';
+		wrap.style.height = h + 'px';
+
+		var imgEl = document.createElement('img');
+		imgEl.src = dataUrl;
+		imgEl.alt = 'Evidencia de pendiente';
+
+		var btnDel = document.createElement('button');
+		btnDel.className = 'btn-del-foto';
+		btnDel.innerHTML = '&#10005;';
+		btnDel.title = 'Eliminar imagen';
+		btnDel.type = 'button';
+		btnDel.setAttribute('aria-label', 'Eliminar imagen adjunta');
+		btnDel.addEventListener('click', function () {
+			wrap.style.transition = 'opacity .2s, transform .2s';
+			wrap.style.opacity = '0';
+			wrap.style.transform = 'scale(.85)';
+			setTimeout(function () {
+				item.remove(); /* elimina imagen + caption juntos */
+				if (previews.children.length === 0) {
+					indicador.style.display = '';
+					dimsEl.hidden = true;
+				}
+				guardarEstadoDebounced();
+			}, 200);
+		});
+
+		wrap.appendChild(imgEl);
+		wrap.appendChild(btnDel);
+
+		/* Campo de descripción breve de la evidencia */
+		var captionWrap = document.createElement('div');
+		captionWrap.className = 'foto-caption-wrap';
+		captionWrap.style.width = w + 'px';
+
+		var caption = document.createElement('textarea');
+		caption.className = 'foto-caption';
+		caption.placeholder = 'Descripción breve de la evidencia…';
+		caption.rows = 2;
+		caption.setAttribute('aria-label', 'Descripción breve de la evidencia');
+		caption.addEventListener('input', guardarEstadoDebounced);
+		_activarAutoResize(caption);
+
+		captionWrap.appendChild(caption);
+		item.appendChild(wrap);
+		item.appendChild(captionWrap);
+		previews.appendChild(item);
+
+		indicador.style.display = 'none';
+		dimsEl.hidden = false;
+		dimWEl.value = w;
+		dimHEl.value = h;
+	};
+	img.onerror = function () { mostrarError(errorEl); };
+	img.src = dataUrl;
+}
+
 function cargarImagenArchivoPend(input, id) {
-	var errorEl = document.getElementById('purlError-' + id);
+	var errorEl    = document.getElementById('purlError-' + id);
+	var previews   = document.getElementById('ppreviews-' + id);
+	var indicador  = document.getElementById('pfotosIndicador-' + id);
+	var dimsEl     = document.getElementById('pdims-' + id);
+	var dimWEl     = document.getElementById('pdimW-' + id);
+	var dimHEl     = document.getElementById('pdimH-' + id);
+
 	Array.prototype.slice.call(input.files).forEach(function (archivo) {
 		if (!archivo.type.startsWith('image/')) { mostrarError(errorEl); return; }
 		var reader = new FileReader();
 		reader.onload = function (e) {
-			_crearThumb(null, e.target.result,
-				document.getElementById('ppreviews-' + id),
-				document.getElementById('pfotosIndicador-' + id),
-				document.getElementById('pdims-' + id),
-				document.getElementById('pdimW-' + id),
-				document.getElementById('pdimH-' + id),
-				errorEl);
+			_crearThumbPend(e.target.result, previews, indicador, dimsEl, dimWEl, dimHEl, errorEl);
 		};
 		reader.onerror = function () { mostrarError(errorEl); };
 		reader.readAsDataURL(archivo);
@@ -1214,6 +1327,9 @@ function redimensionarPend(id) {
 		nuevoAlto = Math.round(nuevoAncho / ratio);
 		wrap.style.width = nuevoAncho + 'px';
 		wrap.style.height = nuevoAlto + 'px';
+		/* Sincronizar ancho del caption con la imagen */
+		var captionWrap = wrap.parentElement && wrap.parentElement.querySelector('.foto-caption-wrap');
+		if (captionWrap) captionWrap.style.width = nuevoAncho + 'px';
 	});
 	dimHEl.value = nuevoAlto;
 }
@@ -1404,10 +1520,41 @@ function validarParaImprimir() {
 	return true;
 }
 
-/* IMPRIMIR */
+/* IMPRIMIR — patrón "div limpio" igual al Example_Print.html
+   Antes de imprimir: reemplaza cada textarea visible por un <div class="print-text">
+   con el mismo contenido. Tras imprimir (afterprint): restaura los textareas originales. */
 function imprimirDocumento() {
 	if (!validarParaImprimir()) return;
+
+	/* 1. Sustituir textareas por divs limpios */
+	var reemplazos = [];
+	document.querySelectorAll(
+		'#listaTareas textarea, #listaPendientes textarea, .foto-caption'
+	).forEach(function (ta) {
+		var proxy = document.createElement('div');
+		proxy.className = 'print-text';
+		/* Copiar el texto respetando saltos de línea */
+		proxy.textContent = ta.value;
+		ta.parentNode.insertBefore(proxy, ta);
+		ta.style.display = 'none';
+		reemplazos.push({ ta: ta, proxy: proxy });
+	});
+
+	/* 2. Imprimir */
 	window.print();
+
+	/* 3. Restaurar (afterprint no dispara en todos los navegadores, usar ambos) */
+	function _restaurar() {
+		reemplazos.forEach(function (r) {
+			r.ta.style.display = '';
+			r.proxy.remove();
+		});
+		reemplazos = [];
+	}
+
+	/* afterprint es lo más fiable; fallback con setTimeout */
+	window.addEventListener('afterprint', _restaurar, { once: true });
+	setTimeout(_restaurar, 1500); /* por si afterprint no dispara */
 }
 
 /* FOOTER DINÁMICO */
