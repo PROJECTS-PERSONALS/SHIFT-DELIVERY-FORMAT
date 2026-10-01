@@ -23,10 +23,10 @@ function _activarAutoResize(textarea) {
 
 /* DATOS DE PERSONAL */
 var ANALISTAS = [
+	{ nombre: 'Juan Camilo Henao Jiménez', cedula: '1001137159' },
 	{ nombre: 'Juan Diego Mazo Lezcano', cedula: '1020110871' },
 	{ nombre: 'Juan José Santana Garzón', cedula: '1022142959' },
 	{ nombre: 'Juan Pablo Gaviria Correa', cedula: '1152464110' },
-	{ nombre: 'Julian García Araque', cedula: '1000401771' },
 	{ nombre: 'Kevin Daniel Mosquera Cordoba', cedula: '1076819340' },
 	{ nombre: 'William David Jarava Solano', cedula: '1104410026' },
 	{ nombre: 'Yin Carlos Martinez Perez', cedula: '72203802' }
@@ -363,8 +363,22 @@ function agregarTarea() {
 					'<input type="time" aria-label="Hora de fin de la tarea">' +
 				'</div>' +
 			'</div>' +
-			/* Col 2 - Ticket */
-			'<div class="t-cell">' + '<input type="text" class="input-ticket"' + ' placeholder="Ej: I-160000 / R-160000"' + ' maxlength="30" autocomplete="off"' + ' aria-label="Número de ticket o caso">' + '</div>' +
+			/* Col 2 - Ticket + URL */
+			'<div class="t-cell">' +
+				'<div class="ticket-widget">' +
+					'<input type="text" class="input-ticket"' +
+						' placeholder="Ej: I-160000 / R-160000"' +
+						' maxlength="30" autocomplete="off"' +
+						' aria-label="Número de ticket o caso">' +
+					'<button type="button" class="btn-ticket-url" title="Agregar hipervínculo al ticket" aria-label="Agregar URL del ticket">' +
+						svgLinkIcono() +
+					'</button>' +
+					'<input type="url" class="input-ticket-url"' +
+						' placeholder="https://hgmdesk.hgm.gov.co/…"' +
+						' autocomplete="off"' +
+						' aria-label="URL del ticket (opcional)">' +
+				'</div>' +
+			'</div>' +
 			/* Col 3 - Descripción */
 			'<div class="t-cell">' + '<textarea placeholder="Descripción detallada de la tarea realizada…"' + ' rows="3" aria-label="Descripción de la tarea (obligatoria)" class="campo-requerido" oninput="marcarCampo(this)"></textarea>' + '</div>' +
 			/* Col 4 - Eliminar */
@@ -376,7 +390,7 @@ function agregarTarea() {
 			'<span class="fotos-indicador" id="fotosIndicador-' + id + '">' + svgFotoIcono() + '<span> Sin imágenes adjuntas </span>' + '</span>' +
 			/* Bloque de carga solo desde PC */
 			'<div class="url-imagen-wrap" id="urlWrap-' + id + '">' +
-				'<label class="btn-cargar-pc" title="Seleccionar imagen desde tu equipo (obligatorio)">' + svgFotoIcono() + ' Agregar imagen(es) <span class="asterisco-obligatorio" aria-hidden="true"> * </span>' + '<input type="file" accept="image/*" multiple hidden' + ' onchange="cargarImagenArchivo(this,' + id + ')">' + '</label>' +
+				'<label class="btn-cargar-pc" title="Seleccionar imagen o video desde tu equipo">' + svgFotoIcono() + ' Agregar imagen(es)/video(s) <span class="asterisco-obligatorio" aria-hidden="true"> * </span>' + '<input type="file" accept="image/*,video/*" multiple hidden' + ' onchange="cargarImagenArchivo(this,' + id + ')">' + '</label>' +
 				/* Controles de dimensiones */
 				'<div class="url-dimensiones" id="dims-' + id + '" hidden>' +
 					'<label class="dims-label"> Anchura </label>' +
@@ -401,6 +415,9 @@ function agregarTarea() {
 	/* Activar auto-resize en el textarea de descripción de la tarea */
 	var tareaDescTA = fila.querySelector('textarea.campo-requerido');
 	_activarAutoResize(tareaDescTA);
+	/* Activar drag & drop en la zona de fotos */
+	var fotosRowTarea = document.getElementById('fotosRow-' + id);
+	_activarDropZone(fotosRowTarea, false, id);
 	/* Garantizar que la tarea maestra siempre quede al final */
 	_asegurarTareaMaestraAlFinal();
 }
@@ -413,104 +430,195 @@ function agregarTarea() {
  * @param {HTMLInputElement} input   El <input type="file"> que disparó el evento
  * @param {number}           id      ID de la fila de tarea
  */
-function cargarImagenArchivo(input, id) {
-	var errorEl = document.getElementById('urlError-' + id);
-	var indicador = document.getElementById('fotosIndicador-' + id);
-	var previews = document.getElementById('previews-' + id);
-	var dimsEl = document.getElementById('dims-' + id);
-	var dimWEl = document.getElementById('dimW-' + id);
-	var dimHEl = document.getElementById('dimH-' + id);
+/* ─────────────────────────────────────────────────────────────
+   _crearPreviewItem
+   Crea el bloque completo preview-item (thumb + caption) para
+   una imagen o un video y lo inserta en el grid de previews.
+   Parámetros compartidos por tareas y pendientes.
+   ───────────────────────────────────────────────────────────── */
+function _crearPreviewItem(dataUrl, esVideo, nombreArchivo, previews, indicador, dimsEl, dimWEl, dimHEl, errorEl) {
+	var anchoInicial = 600;
 
-	var archivos = Array.prototype.slice.call(input.files);
-	if (!archivos.length) return;
+	function _construir(ratio) {
+		ocultarError(errorEl);
+		var altoInicial = Math.round(anchoInicial / ratio);
 
-	archivos.forEach(function (archivo) {
-		if (!archivo.type.startsWith('image/')) {
-			mostrarError(errorEl);
-			return;
+		var item = document.createElement('div');
+		item.className = 'preview-item';
+
+		var wrap = document.createElement('div');
+		wrap.className = 'preview-thumb' + (esVideo ? ' preview-thumb--video' : '');
+		wrap.dataset.ratio = ratio;
+		wrap.style.width = anchoInicial + 'px';
+		wrap.style.height = altoInicial + 'px';
+
+		/* Elemento multimedia: <video> o <img> */
+		var mediaEl;
+		if (esVideo) {
+			mediaEl = document.createElement('video');
+			mediaEl.src = dataUrl;
+			mediaEl.controls = true;
+			mediaEl.preload = 'metadata';
+			mediaEl.style.width = '100%';
+			mediaEl.style.height = '100%';
+			mediaEl.style.objectFit = 'contain';
+			mediaEl.style.display = 'block';
+			mediaEl.setAttribute('aria-label', nombreArchivo || 'Video adjunto');
+		} else {
+			mediaEl = document.createElement('img');
+			mediaEl.src = dataUrl;
+			mediaEl.alt = nombreArchivo || 'Imagen adjunta';
 		}
 
+		var btnDel = document.createElement('button');
+		btnDel.className = 'btn-del-foto';
+		btnDel.innerHTML = '&#10005;';
+		btnDel.title = 'Eliminar ' + (esVideo ? 'video' : 'imagen');
+		btnDel.type = 'button';
+		btnDel.setAttribute('aria-label', 'Eliminar ' + (esVideo ? 'video' : 'imagen') + ' adjunta');
+		btnDel.addEventListener('click', function () {
+			wrap.style.transition = 'opacity .2s, transform .2s';
+			wrap.style.opacity = '0';
+			wrap.style.transform = 'scale(.85)';
+			setTimeout(function () {
+				item.remove();
+				if (previews.children.length === 0) {
+					indicador.style.display = '';
+					dimsEl.hidden = true;
+				}
+				guardarEstadoDebounced();
+			}, 200);
+		});
+
+		wrap.appendChild(mediaEl);
+		wrap.appendChild(btnDel);
+
+		/* Caption */
+		var captionWrap = document.createElement('div');
+		captionWrap.className = 'foto-caption-wrap';
+		captionWrap.style.width = anchoInicial + 'px';
+
+		var caption = document.createElement('textarea');
+		caption.className = 'foto-caption';
+		caption.placeholder = 'Descripción breve de la evidencia…';
+		caption.rows = 2;
+		caption.setAttribute('aria-label', 'Descripción de la ' + (esVideo ? 'video' : 'imagen'));
+		caption.addEventListener('input', guardarEstadoDebounced);
+		_activarAutoResize(caption);
+
+		captionWrap.appendChild(caption);
+		item.appendChild(wrap);
+		item.appendChild(captionWrap);
+		previews.appendChild(item);
+
+		indicador.style.display = 'none';
+		dimsEl.hidden = false;
+		dimWEl.value = anchoInicial;
+		dimHEl.value = altoInicial;
+	}
+
+	if (esVideo) {
+		/* Para video: obtener ratio de los metadatos */
+		var videoTmp = document.createElement('video');
+		videoTmp.preload = 'metadata';
+		videoTmp.onloadedmetadata = function () {
+			var ratio = (videoTmp.videoWidth || 16) / (videoTmp.videoHeight || 9);
+			_construir(ratio);
+		};
+		videoTmp.onerror = function () { _construir(16 / 9); }; /* fallback 16:9 */
+		videoTmp.src = dataUrl;
+	} else {
+		var imgTmp = new Image();
+		imgTmp.onload = function () { _construir(imgTmp.naturalWidth / imgTmp.naturalHeight); };
+		imgTmp.onerror = function () { mostrarError(errorEl); };
+		imgTmp.src = dataUrl;
+	}
+}
+
+/* ─────────────────────────────────────────────────────────────
+   _procesarArchivos
+   Itera sobre un FileList/Array y delega a _crearPreviewItem.
+   Acepta imágenes y videos; rechaza otros tipos.
+   ───────────────────────────────────────────────────────────── */
+function _procesarArchivos(archivos, previews, indicador, dimsEl, dimWEl, dimHEl, errorEl) {
+	archivos.forEach(function (archivo) {
+		var esImagen = archivo.type.startsWith('image/');
+		var esVideo  = archivo.type.startsWith('video/');
+		if (!esImagen && !esVideo) { mostrarError(errorEl); return; }
 		var reader = new FileReader();
 		reader.onload = function (e) {
-			var dataUrl = e.target.result;
-
-			var img = new Image();
-			img.onload = function () {
-				ocultarError(errorEl);
-
-				var ratioNatural = img.naturalWidth / img.naturalHeight;
-				var anchoInicial = 600;
-				var altoInicial = Math.round(anchoInicial / ratioNatural);
-				/*  Contenedor de imagen + caption  */
-				var item = document.createElement('div');
-				item.className = 'preview-item';
-
-				var wrap = document.createElement('div');
-				wrap.className = 'preview-thumb';
-				wrap.dataset.ratio = ratioNatural;
-				wrap.style.width = anchoInicial + 'px';
-				wrap.style.height = altoInicial + 'px';
-
-				var imgEl = document.createElement('img');
-				imgEl.src = dataUrl;
-				imgEl.alt = archivo.name;
-
-				var btnDel = document.createElement('button');
-				btnDel.className = 'btn-del-foto';
-				btnDel.innerHTML = '&#10005;';
-				btnDel.title = 'Eliminar imagen';
-				btnDel.type = 'button';
-				btnDel.setAttribute('aria-label', 'Eliminar imagen adjunta');
-
-				btnDel.addEventListener('click', function () {
-					wrap.style.transition = 'opacity .2s, transform .2s';
-					wrap.style.opacity = '0';
-					wrap.style.transform = 'scale(.85)';
-					setTimeout(function () {
-						item.remove(); /* elimina imagen + caption juntos */
-						if (previews.children.length === 0) {
-							indicador.style.display = '';
-							dimsEl.hidden = true;
-						}
-						guardarEstadoDebounced();
-					}, 200);
-				});
-
-				wrap.appendChild(imgEl);
-				wrap.appendChild(btnDel);
-				/*  Campo de descripción / pie de foto  */
-				var captionWrap = document.createElement('div');
-				captionWrap.className = 'foto-caption-wrap';
-				captionWrap.style.width = anchoInicial + 'px';
-
-				var caption = document.createElement('textarea');
-				caption.className = 'foto-caption';
-				caption.placeholder = 'Descripción breve de la evidencia…';
-				caption.rows = 2;
-				caption.setAttribute('aria-label', 'Descripción de la imagen');
-				caption.addEventListener('input', guardarEstadoDebounced);
-						_activarAutoResize(caption);
-
-				captionWrap.appendChild(caption);
-
-				item.appendChild(wrap);
-				item.appendChild(captionWrap);
-				previews.appendChild(item);
-
-				indicador.style.display = 'none';
-				dimsEl.hidden = false;
-				dimWEl.value = anchoInicial;
-				dimHEl.value = altoInicial;
-			};
-
-			img.onerror = function () { mostrarError(errorEl); };
-			img.src = dataUrl;
+			_crearPreviewItem(e.target.result, esVideo, archivo.name,
+				previews, indicador, dimsEl, dimWEl, dimHEl, errorEl);
 		};
-
 		reader.onerror = function () { mostrarError(errorEl); };
 		reader.readAsDataURL(archivo);
 	});
-	/* Resetear el input para permitir re-seleccionar el mismo archivo */
+}
+
+/* ─────────────────────────────────────────────────────────────
+   _activarDropZone
+   Agrega drag & drop a un elemento .tarea-fotos-row o .pend-fotos-row.
+   Al soltar archivos llama a _procesarArchivos con los IDs correctos.
+   ───────────────────────────────────────────────────────────── */
+function _activarDropZone(fotosRow, esPendiente, id) {
+	if (!fotosRow || fotosRow.dataset.dropActivo) return;
+	fotosRow.dataset.dropActivo = '1';
+
+	var prefijo = esPendiente ? 'p' : '';
+
+	function _getEls() {
+		return {
+			previews:  document.getElementById(prefijo + 'previews-'       + id),
+			indicador: document.getElementById(prefijo + 'fotosIndicador-' + id),
+			dimsEl:    document.getElementById(prefijo + 'dims-'           + id),
+			dimWEl:    document.getElementById(prefijo + 'dimW-'           + id),
+			dimHEl:    document.getElementById(prefijo + 'dimH-'           + id),
+			errorEl:   document.getElementById(prefijo + 'urlError-'       + id)
+		};
+	}
+
+	fotosRow.addEventListener('dragenter', function (e) {
+		e.preventDefault();
+		fotosRow.classList.add('drag-over');
+	});
+
+	fotosRow.addEventListener('dragover', function (e) {
+		e.preventDefault();
+		e.dataTransfer.dropEffect = 'copy';
+		fotosRow.classList.add('drag-over');
+	});
+
+	fotosRow.addEventListener('dragleave', function (e) {
+		/* Solo quitar la clase si el cursor sale del propio fotosRow */
+		if (!fotosRow.contains(e.relatedTarget)) {
+			fotosRow.classList.remove('drag-over');
+		}
+	});
+
+	fotosRow.addEventListener('drop', function (e) {
+		e.preventDefault();
+		fotosRow.classList.remove('drag-over');
+		var files = Array.prototype.slice.call(e.dataTransfer.files);
+		if (!files.length) return;
+		var els = _getEls();
+		_procesarArchivos(files,
+			els.previews, els.indicador, els.dimsEl,
+			els.dimWEl, els.dimHEl, els.errorEl);
+	});
+}
+
+/* CARGAR IMAGEN / VIDEO — Tareas */
+function cargarImagenArchivo(input, id) {
+	var errorEl   = document.getElementById('urlError-'       + id);
+	var previews  = document.getElementById('previews-'       + id);
+	var indicador = document.getElementById('fotosIndicador-' + id);
+	var dimsEl    = document.getElementById('dims-'           + id);
+	var dimWEl    = document.getElementById('dimW-'           + id);
+	var dimHEl    = document.getElementById('dimH-'           + id);
+
+	var archivos = Array.prototype.slice.call(input.files);
+	if (!archivos.length) return;
+	_procesarArchivos(archivos, previews, indicador, dimsEl, dimWEl, dimHEl, errorEl);
 	input.value = '';
 }
 
@@ -977,7 +1085,7 @@ function _serializarFilas(listaId, tipo) {
 	filas.forEach(function (fila) {
 		var obj = { actId: fila.getAttribute('data-act-id') || '' };
 		/* Valores de inputs estándar (excluye caption - se serializa aparte) */
-		var inputs = fila.querySelectorAll('input[type="text"], input[type="time"], textarea:not(.foto-caption)');
+		var inputs = fila.querySelectorAll('input[type="text"], input[type="time"], input[type="url"], textarea:not(.foto-caption)');
 		var vals = [];
 		inputs.forEach(function (inp) { vals.push(inp.value); });
 		obj.valores = vals;
@@ -1029,7 +1137,7 @@ function _restaurarEstado() {
 		/* Rellenar cédula */
 		var cedulaEntrante = document.getElementById('estranteDNI');
 		if (cedulaEntrante) {
-			var analistas = { 'Juan Diego Mazo Lezcano': '1020110871', 'Juan José Santana Garzón': '1022142959', 'Juan Pablo Gaviria Correa': '1152464110', 'Julian García Araque': '1000523826', 'Kevin Daniel Mosquera Cordoba': '1076819340', 'William David Jarava Solano': '1104410026', 'Yin Carlos Martinez Perez': '72203802' };
+			var analistas = { 'Juan Camilo Henao Jiménez': '1001137159', 'Juan Diego Mazo Lezcano': '1020110871', 'Juan José Santana Garzón': '1022142959', 'Juan Pablo Gaviria Correa': '1152464110', 'Kevin Daniel Mosquera Cordoba': '1076819340', 'William David Jarava Solano': '1104410026', 'Yin Carlos Martinez Perez': '72203802' };
 			cedulaEntrante.value = analistas[estado.entrante] || '';
 		}
 	}
@@ -1038,7 +1146,7 @@ function _restaurarEstado() {
 		saliente.value = estado.saliente;
 		var cedulaSaliente = document.getElementById('salienteDNI');
 		if (cedulaSaliente) {
-			var analistas2 = { 'Juan Diego Mazo Lezcano': '1020110871', 'Juan José Santana Garzón': '1022142959', 'Juan Pablo Gaviria Correa': '1152464110', 'Julian García Araque': '1000523826', 'Kevin Daniel Mosquera Cordoba': '1076819340', 'William David Jarava Solano': '1104410026', 'Yin Carlos Martinez Perez': '72203802' };
+			var analistas2 = { 'Juan Camilo Henao Jiménez': '1001137159', 'Juan Diego Mazo Lezcano': '1020110871', 'Juan José Santana Garzón': '1022142959', 'Juan Pablo Gaviria Correa': '1152464110', 'Kevin Daniel Mosquera Cordoba': '1076819340', 'William David Jarava Solano': '1104410026', 'Yin Carlos Martinez Perez': '72203802' };
 			cedulaEntrante2 = analistas2[estado.saliente] || '';
 			cedulaSaliente.value = cedulaEntrante2;
 		}
@@ -1051,11 +1159,17 @@ function _restaurarEstado() {
 			var filas = contenedor.querySelectorAll('.tarea-fila:not([data-turno-auto])');
 			var ultima = filas[filas.length - 1];
 			if (!ultima) return;
-			var inputs = ultima.querySelectorAll('input[type="text"], input[type="time"], textarea:not(.foto-caption)');
+			var inputs = ultima.querySelectorAll('input[type="text"], input[type="time"], input[type="url"], textarea:not(.foto-caption)');
 			inputs.forEach(function (inp, i) {
 				if (t.valores[i] !== undefined) inp.value = t.valores[i];
 				/* Recalcular altura tras restaurar el valor */
 				if (inp.tagName === 'TEXTAREA') autoResize(inp);
+				/* Si es URL y tiene valor, mostrar el campo automáticamente */
+				if (inp.type === 'url' && inp.value.trim()) {
+					inp.classList.add('visible');
+					var btn = inp.closest('.ticket-widget') && inp.closest('.ticket-widget').querySelector('.btn-ticket-url');
+					if (btn) btn.classList.add('active');
+				}
 			});
 			/* Restaurar captions de imágenes si existen */
 			if (Array.isArray(t.captions) && t.captions.length > 0) {
@@ -1076,11 +1190,17 @@ function _restaurarEstado() {
 			var filas = contenedor.querySelectorAll('.pendiente-fila');
 			var ultima = filas[filas.length - 1];
 			if (!ultima) return;
-			var inputs = ultima.querySelectorAll('input[type="text"], input[type="time"], textarea:not(.foto-caption)');
+			var inputs = ultima.querySelectorAll('input[type="text"], input[type="time"], input[type="url"], textarea:not(.foto-caption)');
 			inputs.forEach(function (inp, i) {
 				if (p.valores[i] !== undefined) inp.value = p.valores[i];
 				/* Recalcular altura tras restaurar el valor */
 				if (inp.tagName === 'TEXTAREA') autoResize(inp);
+				/* Si es URL y tiene valor, mostrar el campo automáticamente */
+				if (inp.type === 'url' && inp.value.trim()) {
+					inp.classList.add('visible');
+					var btn = inp.closest('.ticket-widget') && inp.closest('.ticket-widget').querySelector('.btn-ticket-url');
+					if (btn) btn.classList.add('active');
+				}
 			});
 			if (Array.isArray(p.captions) && p.captions.length > 0) {
 				var caps = ultima.querySelectorAll('.foto-caption');
@@ -1132,7 +1252,11 @@ function agregarPendiente() {
 	fila.innerHTML =
 		'<div class="pendiente-grid">' +
 			'<div class="t-cell">' +
-				'<input type="text" class="input-ticket"' + ' placeholder="Ej: I-160000 / R-160000"' + ' maxlength="30" autocomplete="off"' + ' aria-label="Número de ticket del pendiente">' +
+				'<div class="ticket-widget">' +
+					'<input type="text" class="input-ticket"' + ' placeholder="Ej: I-160000 / R-160000"' + ' maxlength="30" autocomplete="off"' + ' aria-label="Número de ticket del pendiente">' +
+					'<button type="button" class="btn-ticket-url" title="Agregar hipervínculo al ticket" aria-label="Agregar URL del ticket">' + svgLinkIcono() + '</button>' +
+					'<input type="url" class="input-ticket-url" placeholder="https://hgmdesk.hgm.gov.co/…" autocomplete="off" aria-label="URL del ticket (opcional)">' +
+				'</div>' +
 			'</div>' +
 			'<div class="t-cell">' +
 				'<textarea placeholder="Descripción del pendiente…"' + ' rows="3" aria-label="Descripción del pendiente (obligatoria)" class="campo-requerido" oninput="marcarCampo(this)"></textarea>' +
@@ -1149,8 +1273,8 @@ function agregarPendiente() {
 			'<span class="fotos-indicador" id="pfotosIndicador-' + id + '">' + svgFotoIcono() + '<span> Sin imágenes adjuntas </span>' + '</span>' +
 			'<div class="url-imagen-wrap" id="purlWrap-' + id + '">' +
 				/* Botón cargar */
-				'<label class="btn-cargar-pc" title="Seleccionar imagen desde tu equipo (obligatorio)">' + svgFotoIcono() + ' Agregar imagen(es) <span class="asterisco-obligatorio" aria-hidden="true"> * </span>' +
-					'<input type="file" accept="image/*" multiple hidden' + ' onchange="cargarImagenArchivoPend(this,' + id + ')">' +
+				'<label class="btn-cargar-pc" title="Seleccionar imagen o video desde tu equipo">' + svgFotoIcono() + ' Agregar imagen(es)/video(s) <span class="asterisco-obligatorio" aria-hidden="true"> * </span>' +
+					'<input type="file" accept="image/*,video/*" multiple hidden' + ' onchange="cargarImagenArchivoPend(this,' + id + ')">' +
 				'</label>' +
 				'<div class="url-dimensiones" id="pdims-' + id + '" hidden>' +
 					'<label class="dims-label"> Anchura </label>' +
@@ -1173,6 +1297,9 @@ function agregarPendiente() {
 	fila.querySelectorAll('textarea').forEach(function (ta) {
 		_activarAutoResize(ta);
 	});
+	/* Activar drag & drop en la zona de fotos del pendiente */
+	var fotosRowPend = document.getElementById('pfotosRow-' + id);
+	_activarDropZone(fotosRowPend, true, id);
 }
 
 /* Helpers reutilizables para zona de imágenes de pendientes */
@@ -1222,96 +1349,18 @@ function _crearThumb(url, dataUrl, previews, indicador, dimsEl, dimWEl, dimHEl, 
 	img.src = dataUrl || url;
 }
 
-/* _crearThumbPend: versión completa para pendientes.
-   Igual que cargarImagenArchivo (tareas) — crea preview-item + caption. */
-function _crearThumbPend(dataUrl, previews, indicador, dimsEl, dimWEl, dimHEl, errorEl) {
-	var img = new Image();
-	img.onload = function () {
-		ocultarError(errorEl);
-		var ratio = img.naturalWidth / img.naturalHeight;
-		var w = 600, h = Math.round(600 / ratio);
-
-		/* Contenedor imagen + caption (mismo patrón que tareas) */
-		var item = document.createElement('div');
-		item.className = 'preview-item';
-
-		var wrap = document.createElement('div');
-		wrap.className = 'preview-thumb';
-		wrap.dataset.ratio = ratio;
-		wrap.style.width = w + 'px';
-		wrap.style.height = h + 'px';
-
-		var imgEl = document.createElement('img');
-		imgEl.src = dataUrl;
-		imgEl.alt = 'Evidencia de pendiente';
-
-		var btnDel = document.createElement('button');
-		btnDel.className = 'btn-del-foto';
-		btnDel.innerHTML = '&#10005;';
-		btnDel.title = 'Eliminar imagen';
-		btnDel.type = 'button';
-		btnDel.setAttribute('aria-label', 'Eliminar imagen adjunta');
-		btnDel.addEventListener('click', function () {
-			wrap.style.transition = 'opacity .2s, transform .2s';
-			wrap.style.opacity = '0';
-			wrap.style.transform = 'scale(.85)';
-			setTimeout(function () {
-				item.remove(); /* elimina imagen + caption juntos */
-				if (previews.children.length === 0) {
-					indicador.style.display = '';
-					dimsEl.hidden = true;
-				}
-				guardarEstadoDebounced();
-			}, 200);
-		});
-
-		wrap.appendChild(imgEl);
-		wrap.appendChild(btnDel);
-
-		/* Campo de descripción breve de la evidencia */
-		var captionWrap = document.createElement('div');
-		captionWrap.className = 'foto-caption-wrap';
-		captionWrap.style.width = w + 'px';
-
-		var caption = document.createElement('textarea');
-		caption.className = 'foto-caption';
-		caption.placeholder = 'Descripción breve de la evidencia…';
-		caption.rows = 2;
-		caption.setAttribute('aria-label', 'Descripción breve de la evidencia');
-		caption.addEventListener('input', guardarEstadoDebounced);
-		_activarAutoResize(caption);
-
-		captionWrap.appendChild(caption);
-		item.appendChild(wrap);
-		item.appendChild(captionWrap);
-		previews.appendChild(item);
-
-		indicador.style.display = 'none';
-		dimsEl.hidden = false;
-		dimWEl.value = w;
-		dimHEl.value = h;
-	};
-	img.onerror = function () { mostrarError(errorEl); };
-	img.src = dataUrl;
-}
-
+/* CARGAR IMAGEN / VIDEO — Pendientes */
 function cargarImagenArchivoPend(input, id) {
-	var errorEl    = document.getElementById('purlError-' + id);
-	var previews   = document.getElementById('ppreviews-' + id);
-	var indicador  = document.getElementById('pfotosIndicador-' + id);
-	var dimsEl     = document.getElementById('pdims-' + id);
-	var dimWEl     = document.getElementById('pdimW-' + id);
-	var dimHEl     = document.getElementById('pdimH-' + id);
+	var errorEl   = document.getElementById('purlError-'       + id);
+	var previews  = document.getElementById('ppreviews-'       + id);
+	var indicador = document.getElementById('pfotosIndicador-' + id);
+	var dimsEl    = document.getElementById('pdims-'           + id);
+	var dimWEl    = document.getElementById('pdimW-'           + id);
+	var dimHEl    = document.getElementById('pdimH-'           + id);
 
-	Array.prototype.slice.call(input.files).forEach(function (archivo) {
-		if (!archivo.type.startsWith('image/')) { mostrarError(errorEl); return; }
-		var reader = new FileReader();
-		reader.onload = function (e) {
-			_crearThumbPend(e.target.result, previews, indicador, dimsEl, dimWEl, dimHEl, errorEl);
-		};
-		reader.onerror = function () { mostrarError(errorEl); };
-		reader.readAsDataURL(archivo);
-	});
+	var archivos = Array.prototype.slice.call(input.files);
+	if (!archivos.length) return;
+	_procesarArchivos(archivos, previews, indicador, dimsEl, dimWEl, dimHEl, errorEl);
 	input.value = '';
 }
 
@@ -1526,35 +1575,67 @@ function validarParaImprimir() {
 function imprimirDocumento() {
 	if (!validarParaImprimir()) return;
 
-	/* 1. Sustituir textareas por divs limpios */
 	var reemplazos = [];
+
+	/* 1a. Sustituir textareas por divs limpios (comportamiento anterior) */
 	document.querySelectorAll(
 		'#listaTareas textarea, #listaPendientes textarea, .foto-caption'
 	).forEach(function (ta) {
 		var proxy = document.createElement('div');
 		proxy.className = 'print-text';
-		/* Copiar el texto respetando saltos de línea */
 		proxy.textContent = ta.value;
 		ta.parentNode.insertBefore(proxy, ta);
 		ta.style.display = 'none';
-		reemplazos.push({ ta: ta, proxy: proxy });
+		reemplazos.push({ el: ta, proxy: proxy });
+	});
+
+	/* 1b. Sustituir ticket-widget por badge con hipervínculo (si tiene URL) */
+	document.querySelectorAll('.ticket-widget').forEach(function (widget) {
+		var ticketInput = widget.querySelector('.input-ticket');
+		var urlInput    = widget.querySelector('.input-ticket-url');
+		var numero  = ticketInput ? ticketInput.value.trim() : '';
+		var url     = urlInput    ? urlInput.value.trim()    : '';
+		if (!numero) return; /* sin ticket no hay nada que mostrar */
+
+		var proxy;
+		if (url) {
+			/* Con URL: enlace clicable */
+			proxy = document.createElement('a');
+			proxy.href      = url;
+			proxy.target    = '_blank';
+			proxy.rel       = 'noopener noreferrer';
+			proxy.className = 'print-ticket-link';
+			proxy.textContent = numero;
+		} else {
+			/* Sin URL: texto plano con el mismo estilo */
+			proxy = document.createElement('span');
+			proxy.className = 'print-ticket-link';
+			proxy.textContent = numero;
+		}
+		widget.parentNode.insertBefore(proxy, widget);
+		widget.style.display = 'none';
+		reemplazos.push({ el: widget, proxy: proxy });
 	});
 
 	/* 2. Imprimir */
 	window.print();
 
-	/* 3. Restaurar (afterprint no dispara en todos los navegadores, usar ambos) */
+	/* 3. Restaurar — SOLO tras afterprint (se dispara cuando el usuario cierra el diálogo
+	   o termina de guardar el PDF). El setTimeout es fallback largo (30s) para navegadores
+	   que no soporten afterprint; no interferirá con el guardado del PDF. */
+	var _yaRestaurado = false;
 	function _restaurar() {
+		if (_yaRestaurado) return;
+		_yaRestaurado = true;
 		reemplazos.forEach(function (r) {
-			r.ta.style.display = '';
+			r.el.style.display = '';
 			r.proxy.remove();
 		});
 		reemplazos = [];
 	}
 
-	/* afterprint es lo más fiable; fallback con setTimeout */
 	window.addEventListener('afterprint', _restaurar, { once: true });
-	setTimeout(_restaurar, 1500); /* por si afterprint no dispara */
+	setTimeout(_restaurar, 30000); /* fallback 30s — no restaura mientras el PDF está abierto */
 }
 
 /* FOOTER DINÁMICO */
@@ -1574,6 +1655,17 @@ function initBotones() {
 	document.getElementById('btnAgregarPendiente').addEventListener('click', agregarPendiente);
 	document.getElementById('btnPrint').addEventListener('click', imprimirDocumento);
 	document.getElementById('btnClear').addEventListener('click', limpiarFormulario);
+
+	/* Delegación: toggle del campo URL de ticket en cualquier fila (tareas y pendientes) */
+	document.addEventListener('click', function (e) {
+		var btn = e.target.closest('.btn-ticket-url');
+		if (!btn) return;
+		var urlInput = btn.closest('.ticket-widget').querySelector('.input-ticket-url');
+		var activo = urlInput.classList.toggle('visible');
+		btn.classList.toggle('active', activo);
+		btn.title = activo ? 'Ocultar campo de URL' : 'Agregar hipervínculo al ticket';
+		if (activo) urlInput.focus();
+	});
 }
 
 /* SELECT DINÁMICO DE ANALISTAS */
@@ -1636,6 +1728,14 @@ function svgFotoIcono() {
 				'<rect x="2" y="4" width="16" height="13" rx="2" stroke="currentColor" stroke-width="1.4"/>' +
 				'<circle cx="10" cy="10.5" r="2.5" stroke="currentColor" stroke-width="1.4"/>' +
 				'<path d="M7 4l1.2-2h3.6L13 4" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/>' +
+			'</svg>';
+}
+
+/* Ícono de cadena / hipervínculo para el botón de URL del ticket */
+function svgLinkIcono() {
+	return '<svg viewBox="0 0 20 20" fill="none" style="width:11px;height:11px;flex-shrink:0">' +
+				'<path d="M8.5 11.5a4 4 0 0 0 5.66.44l2-2a4 4 0 0 0-5.66-5.66L9.5 5.28" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>' +
+				'<path d="M11.5 8.5a4 4 0 0 0-5.66-.44l-2 2a4 4 0 0 0 5.66 5.66l1-1" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>' +
 			'</svg>';
 }
 
