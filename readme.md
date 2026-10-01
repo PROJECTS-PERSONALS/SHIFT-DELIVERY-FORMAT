@@ -1,4 +1,4 @@
-# Entrega de Turno 24H
+****# Entrega de Turno 24H
 
 ## Descripción
 
@@ -102,10 +102,10 @@
 - **Empleado Entrante**: Selector + DNI automático
 - **Empleado Saliente**: Selector + DNI automático
 - **Lista hardcodeada de analistas**:
-  1. Juan Diego Mazo Lezcano (1020110871)
-  2. Juan José Santana Garzón (1022142959)
-  3. Juan Pablo Gaviria Correa (1152464110)
-  4. Julian García Araque (1000401771)
+  1. Juan Camilo Henao Jiménez (1001137159)
+  2. Juan Diego Mazo Lezcano (1020110871)
+  3. Juan José Santana Garzón (1022142959)
+  4. Juan Pablo Gaviria Correa (1152464110)
   5. Kevin Daniel Mosquera Cordoba (1076819340)
   6. William David Jarava Solano (1104410026)
   7. Yin Carlos Martinez Perez (72203802)
@@ -243,10 +243,10 @@
 ## Analistas Hardcodeados
 
 ```
-1. Juan Diego Mazo Lezcano     
-2. Juan José Santana Garzón    
-3. Juan Pablo Gaviria Correa   
-4. Julian García Araque        
+1. Juan Camilo Henao Jiménez
+2. Juan Diego Mazo Lezcano     
+3. Juan José Santana Garzón    
+4. Juan Pablo Gaviria Correa   
 5. Kevin Daniel Mosquera       
 6. William David Jarava        
 7. Yin Carlos Martinez Perez   
