@@ -1,4 +1,4 @@
-****# Entrega de Turno 24H
+# Entrega de Turno 24H
 
 ## Descripción
 
