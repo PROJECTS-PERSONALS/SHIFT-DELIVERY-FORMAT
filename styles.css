@@ -413,6 +413,8 @@ body {
 
 /* FILAS DE TAREAS (TaskItem) */
 .tarea-fila { animation: slideIn .22s ease both; border-bottom: 1px solid #e5eaf5; }
+/* Tarea maestra R-000000: borde superior doble para separarla visualmente */
+.tarea-fila--maestra { border-top: 2px solid var(--azul-200); margin-top: 2px; }
 
 .tarea-fila:last-child { border-bottom: none; }
 
@@ -478,6 +480,62 @@ body {
 /* Placeholder del ticket */
 .input-ticket::placeholder { font-size: 11.5px; font-style: italic; color: var(--gris-400); }
 
+/* ── TICKET WIDGET — número + botón de URL + campo URL ────────── */
+.ticket-widget {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    width: 100%;
+}
+
+/* Fila superior: input-ticket + botón de enlace */
+.ticket-widget .input-ticket {
+    flex: 1;
+}
+
+/* Botón para mostrar/ocultar el campo URL */
+.btn-ticket-url {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    align-self: flex-start;
+    padding: 3px 7px;
+    border: 1px solid var(--azul-200);
+    border-radius: var(--r-sm);
+    background: var(--azul-50);
+    color: var(--azul-600);
+    font-size: 10px;
+    font-weight: 500;
+    font-family: var(--font-body);
+    cursor: pointer;
+    transition: background .15s, border-color .15s, color .15s;
+    white-space: nowrap;
+    margin-top: 2px;
+}
+.btn-ticket-url::after { content: 'Agregar enlace'; }
+.btn-ticket-url.active { background: var(--azul-100); border-color: var(--azul-400); color: var(--azul-700); }
+.btn-ticket-url.active::after { content: 'Ocultar enlace'; }
+.btn-ticket-url:hover { background: var(--azul-100); }
+.btn-ticket-url svg { color: currentColor; }
+
+/* Campo de URL — colapsado por defecto, visible con clase .visible */
+.input-ticket-url {
+    display: none;
+    width: 100%;
+    font-size: 11px;
+    padding: 4px 7px;
+    border: 1px solid var(--azul-200);
+    border-radius: var(--r-sm);
+    background: var(--azul-50);
+    color: var(--azul-700);
+    font-family: var(--font-body);
+    outline: none;
+    transition: border-color .2s, box-shadow .2s;
+}
+.input-ticket-url.visible { display: block; }
+.input-ticket-url:focus { border-color: var(--azul-400); box-shadow: 0 0 0 2px rgba(37,99,196,.1); }
+
 /* BADGES DE TICKET .ticket-badge .ticket-badge--pend */
 .ticket-badge {
     font-size: 11px;
@@ -509,6 +567,39 @@ body {
 
 /* Zona de fotos para pendientes idéntica pero con borde superior ámbar sutil */
 .pend-fotos-row { border-top-color: #f0c04066; }
+
+/* ── DRAG & DROP ──────────────────────────────────────────────
+   Estado activo cuando el usuario arrastra archivos encima de la zona */
+.tarea-fotos-row.drag-over {
+    background: #e8f0fe;
+    border-top: 2px dashed var(--azul-500);
+    outline: 2px dashed var(--azul-400);
+    outline-offset: -4px;
+    transition: background .15s, outline .15s;
+}
+
+/* Texto indicador que aparece en el centro durante el drag */
+.tarea-fotos-row.drag-over .fotos-indicador::after {
+    content: ' — Suelta aquí';
+    font-weight: 600;
+    color: var(--azul-600);
+}
+
+/* ── VIDEO THUMBNAIL ──────────────────────────────────────────
+   El thumb de video tiene fondo oscuro y el <video> cubre todo */
+.preview-thumb--video {
+    background: #0f172a;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.preview-thumb--video video {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    display: block;
+}
 
 /* Indicador textual de fotos (sin imágenes) */
 .fotos-indicador {
@@ -950,31 +1041,451 @@ body {
 
 .btn-print:hover { background: var(--azul-50); transform: translateY(-1px); box-shadow: 0 4px 18px rgba(0, 0, 0, .25); }
 
-/* RESPONSIVE ≤ 575px (xs Bootstrap) móvil */
+/* Botón Enviar correo — junto al botón Imprimir en la action-bar */
+.btn-email {
+    gap: 7px;
+    border: none;
+    cursor: pointer;
+    font-weight: 700;
+    padding: 9px 20px;
+    font-size: 13px;
+    align-items: center;
+    transition: all .18s;
+    letter-spacing: .2px;
+    display: inline-flex;
+    color: var(--blanco);
+    background: rgba(255,255,255,.13);
+    border-radius: var(--r-md);
+    font-family: var(--font-body);
+    border: 1px solid rgba(255,255,255,.25);
+}
+.btn-email svg { width: 16px; height: 16px; }
+.btn-email:hover { background: rgba(255,255,255,.22); border-color: rgba(255,255,255,.5); transform: translateY(-1px); }
+
+/* ══════════════════════════════════════════════════════════════
+   MODAL DE CORREO ELECTRÓNICO
+══════════════════════════════════════════════════════════════ */
+.email-modal-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 9000;
+    background: rgba(10, 20, 50, .65);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    backdrop-filter: blur(3px);
+    animation: emailFadeIn .18s ease;
+}
+.email-modal-overlay[hidden] { display: none; }
+
+@keyframes emailFadeIn {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
+
+.email-modal {
+    width: 100%;
+    max-width: 580px;
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+    background: var(--blanco);
+    border-radius: 10px;
+    box-shadow: 0 24px 80px rgba(0,0,0,.35);
+    overflow: hidden;
+    animation: emailSlideUp .2s ease;
+}
+
+@keyframes emailSlideUp {
+    from { transform: translateY(20px); opacity: 0; }
+    to   { transform: translateY(0);    opacity: 1; }
+}
+
+/* Header del modal */
+.email-modal-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 16px 20px;
+    background: var(--c-header);
+    color: var(--blanco);
+    flex-shrink: 0;
+}
+.email-modal-header svg { opacity: .85; flex-shrink: 0; }
+.email-modal-header h2 {
+    flex: 1;
+    margin: 0;
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: .2px;
+    font-family: var(--font-body);
+}
+.email-modal-close {
+    background: none;
+    border: none;
+    color: rgba(255,255,255,.7);
+    font-size: 16px;
+    cursor: pointer;
+    padding: 4px 6px;
+    border-radius: 4px;
+    line-height: 1;
+    transition: color .15s, background .15s;
+}
+.email-modal-close:hover { color: var(--blanco); background: rgba(255,255,255,.15); }
+
+/* Cuerpo del modal */
+.email-modal-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.email-field-group {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+.email-field-group--body { flex: 1; }
+
+.email-label {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: .5px;
+    text-transform: uppercase;
+    color: var(--gris-500);
+    font-family: var(--font-body);
+}
+
+.email-input {
+    width: 100%;
+    padding: 8px 10px;
+    font-size: 12.5px;
+    font-family: var(--font-body);
+    color: var(--gris-900);
+    background: var(--gris-50);
+    border: 1px solid var(--gris-300);
+    border-radius: var(--r-sm);
+    outline: none;
+    transition: border-color .15s, box-shadow .15s;
+}
+.email-input:focus {
+    border-color: var(--azul-500);
+    box-shadow: 0 0 0 3px rgba(37,99,196,.12);
+    background: var(--blanco);
+}
+
+.email-textarea {
+    width: 100%;
+    padding: 10px;
+    font-size: 12.5px;
+    line-height: 1.6;
+    font-family: var(--font-body);
+    color: var(--gris-900);
+    background: var(--gris-50);
+    border: 1px solid var(--gris-300);
+    border-radius: var(--r-sm);
+    resize: vertical;
+    outline: none;
+    transition: border-color .15s, box-shadow .15s;
+    min-height: 160px;
+}
+.email-textarea:focus {
+    border-color: var(--azul-500);
+    box-shadow: 0 0 0 3px rgba(37,99,196,.12);
+    background: var(--blanco);
+}
+
+/* Zona de firma */
+.email-firma-preview {
+    padding: 10px 12px;
+    background: #f8faff;
+    border: 1px solid var(--azul-100);
+    border-radius: var(--r-sm);
+}
+.email-firma-hint {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    color: var(--gris-500);
+    font-family: var(--font-body);
+    margin: 0 0 8px;
+}
+.email-firma-img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 4px;
+    border: 1px solid var(--gris-200);
+}
+.email-firma-sin-img {
+    font-size: 11px;
+    color: var(--amber-600, #d97706);
+    font-family: var(--font-body);
+}
+.email-firma-sin-img code {
+    background: #fef3c7;
+    padding: 1px 5px;
+    border-radius: 3px;
+    font-size: 11px;
+}
+
+/* Footer del modal */
+.email-modal-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 14px 20px;
+    border-top: 1px solid var(--gris-200);
+    background: var(--gris-50);
+    flex-shrink: 0;
+    flex-wrap: wrap;
+}
+.email-modal-nota {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 10.5px;
+    color: var(--gris-500);
+    font-family: var(--font-body);
+    font-style: italic;
+    flex: 1;
+}
+.email-modal-btns {
+    display: flex;
+    gap: 8px;
+    flex-shrink: 0;
+}
+.email-btn-cancel {
+    padding: 8px 16px;
+    font-size: 12.5px;
+    font-weight: 600;
+    font-family: var(--font-body);
+    cursor: pointer;
+    border-radius: var(--r-sm);
+    border: 1px solid var(--gris-300);
+    background: var(--blanco);
+    color: var(--gris-700);
+    transition: all .15s;
+}
+.email-btn-cancel:hover { background: var(--gris-100); border-color: var(--gris-400); }
+
+.email-btn-send {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 8px 18px;
+    font-size: 12.5px;
+    font-weight: 700;
+    font-family: var(--font-body);
+    cursor: pointer;
+    border-radius: var(--r-sm);
+    border: none;
+    background: var(--c-header);
+    color: var(--blanco);
+    transition: all .15s;
+    box-shadow: 0 2px 8px rgba(13,27,62,.25);
+}
+.email-btn-send:hover { background: #1a2d5a; transform: translateY(-1px); }
+
+/* Responsive modal en móvil */
 @media (max-width: 575.98px) {
-    body { padding-top: 8px; padding-bottom: 80px; }
-    /* Header: columna centrada */
-    .fecha-field { width: 100%; }
-    /* Fecha bar: apilada */
-    .fecha-bar { padding: 8px 12px; }
-    .btn-clear  { padding: 7px 12px; }
-    /* Action bar */
-    .action-bar { padding: 10px 12px; }
+    .email-modal { max-height: 95vh; border-radius: 12px 12px 0 0; }
+    .email-modal-overlay { align-items: flex-end; padding: 0; }
+    .email-modal-footer { flex-direction: column; align-items: stretch; }
+    .email-modal-btns { justify-content: flex-end; }
+    .btn-email { padding: 10px 14px; font-size: 12px; }
+}
+
+/* ══════════════════════════════════════════════════════════════
+   RESPONSIVE MÓVIL ≤ 575px  (xs Bootstrap — smartphones)
+   Mobile-first: cada regla resuelve un problema específico
+   de usabilidad en pantallas de 320–575px.
+══════════════════════════════════════════════════════════════ */
+@media (max-width: 575.98px) {
+
+    /* ── BASE ─────────────────────────────────────────────── */
+    body {
+        padding-top: 8px;
+        padding-bottom: 90px; /* espacio para action-bar fija */
+    }
+
+    /* ── HEADER DEL DOCUMENTO ─────────────────────────────── */
+    .doc-header {
+        gap: 8px;
+        padding: 12px 14px;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+    }
     .header-right-spacer { display: none; }
-    #ciudadInput, #fechaInput { width: 100%; }
-    /* Zona fotos: menos padding */
-    .tarea-fotos-row { padding: 6px 10px 10px; }
-    /* Tabla de tareas: columna única */
-    .tabla-cols, .tabla-cols--pend { display: none; }
-    .btn-print  { font-size: 12px; padding: 8px 14px; }
-    .tarea-grid { grid-template-columns: 1fr; padding: 0 10px; }
-    .pendiente-grid { grid-template-columns: 1fr; padding: 0 10px; }
+
+    /* ── BARRA DE FECHA ───────────────────────────────────── */
+    .fecha-bar { padding: 8px 12px; }
     .fecha-bar-inner { flex-direction: column; align-items: flex-start; gap: 6px; }
-    /* Firmas: columna única */
-    .firmas-grid { grid-template-columns: 1fr; gap: var(--sp-4); padding: var(--sp-3); }
-    .t-cell { padding: 8px 6px; border-right: none; border-bottom: 1px solid #e5eaf5; }
-    .t-cell:last-child { border-bottom: none; align-items: flex-start; justify-content: flex-start; }
-    .doc-header { gap: 8px; text-align: center; padding: 12px 14px; align-items: center; flex-direction: column; }
+    .fecha-field { width: 100%; }
+    #ciudadInput, #fechaInput { width: 100%; }
+
+    /* ── SECCIÓN: cabeceras de columna ocultas en móvil ───── */
+    .tabla-cols,
+    .tabla-cols--pend { display: none; }
+
+    /* ── GRIDS DE TAREAS Y PENDIENTES: columna única ──────── */
+    .tarea-grid {
+        grid-template-columns: 1fr;
+        padding: 0;
+        gap: 0;
+    }
+    .pendiente-grid {
+        grid-template-columns: 1fr;
+        padding: 0;
+        gap: 0;
+    }
+
+    /* ── CELDAS ───────────────────────────────────────────── */
+    .t-cell {
+        padding: 10px 14px;
+        border-right: none;
+        border-bottom: 1px solid #e5eaf5;
+        min-height: unset;
+        width: 100%;
+        box-sizing: border-box;
+    }
+    .t-cell:last-child {
+        border-bottom: none;
+        align-items: flex-start;
+        justify-content: flex-start;
+    }
+
+    /* Etiqueta de celda visible solo en móvil */
+    .t-cell::before {
+        content: attr(data-label);
+        display: block;
+        font-size: 9px;
+        font-weight: 700;
+        letter-spacing: .5px;
+        text-transform: uppercase;
+        color: var(--gris-400);
+        margin-bottom: 4px;
+    }
+
+    /* ── HORAS: mostrar en fila horizontal ────────────────── */
+    .t-cell:first-child {
+        flex-direction: row;
+        align-items: center;
+        gap: var(--sp-4);
+        flex-wrap: wrap;
+    }
+    .hora-grupo { flex-direction: row; align-items: center; gap: 6px; }
+    .hora-label { min-width: 34px; text-align: right; }
+
+    /* ── TICKET WIDGET: adaptado a móvil ─────────────────── */
+    .ticket-widget { gap: 6px; }
+    .input-ticket-url { font-size: 12px; }
+
+    /* ── TEXTAREA: mínimo confortable para teclado táctil ─── */
+    .t-cell textarea {
+        min-height: 72px;
+        font-size: 13px;
+    }
+
+    /* ── BOTÓN ELIMINAR: ancho completo en móvil ─────────── */
+    .btn-eliminar {
+        position: static; /* quitar absolute */
+        width: 100%;
+        justify-content: center;
+        padding: 9px 12px;
+        font-size: 12px;
+        margin-top: 4px;
+    }
+
+    /* ── ZONA DE FOTOS ────────────────────────────────────── */
+    .tarea-fotos-row {
+        flex-direction: column;
+        padding: 10px 14px 14px;
+        gap: var(--sp-2);
+        align-items: stretch;
+    }
+
+    /* ── BOTONES DE SUBIDA: grandes y táctiles ────────────── */
+    .btn-cargar-pc {
+        width: 100%;
+        min-height: 48px;         /* mínimo táctil WCAG 2.5.5 */
+        justify-content: center;
+        font-size: 13px;
+        padding: 10px 14px;
+        margin: 0;
+        border-radius: var(--r-md);
+    }
+
+    /* Botón galería: texto completo en desktop, icono en móvil ya es visible */
+    .btn-cargar-texto-galeria { display: inline; }
+
+    /* Botón cámara: siempre visible en móvil */
+    .btn-cargar-camara { display: inline-flex !important; }
+
+    /* ── DIMENSIONES DE THUMBNAILS ────────────────────────── */
+    .url-dimensiones {
+        margin-left: 0;
+        padding: 6px 0 2px;
+        flex-wrap: wrap;
+        gap: 6px;
+        width: 100%;
+    }
+    .dims-input { width: 60px; }
+
+    /* ── PREVIEWS: ancho máximo disponible ────────────────── */
+    .previews-grid {
+        justify-content: flex-start;
+    }
+    .preview-item { max-width: 100%; }
+    .preview-thumb,
+    .foto-caption-wrap {
+        max-width: 100% !important;
+        width: 100% !important;
+        box-sizing: border-box;
+    }
+
+    /* ── FIRMAS: columna única ────────────────────────────── */
+    .firmas-grid {
+        grid-template-columns: 1fr;
+        gap: var(--sp-4);
+        padding: var(--sp-3);
+    }
+    .campo-firma select.campo-firma-select,
+    .campo-firma input.campo-firma-cedula {
+        font-size: 13px;
+        padding: 8px 10px;
+    }
+
+    /* ── ACTION BAR: botones grandes táctiles ─────────────── */
+    .action-bar {
+        padding: 10px 12px;
+        gap: 8px;
+    }
+    .btn-print {
+        flex: 1;                /* ocupa el espacio disponible */
+        justify-content: center;
+        font-size: 13px;
+        padding: 10px 16px;
+    }
+    .btn-clear {
+        padding: 8px 12px;
+        font-size: 11.5px;
+    }
+
+    /* ── BOTÓN AGREGAR: más fácil de tocar ────────────────── */
+    .btn-agregar-wrap { padding: 10px 14px 6px; }
+    .btn-agregar { width: 100%; justify-content: center; min-height: 44px; }
+
+    /* ── SELECTOR DE TURNO ────────────────────────────────── */
+    .turno-selector-wrap { width: 100%; }
+    .turno-select { width: 100%; font-size: 13px; }
+    .turno-pill { font-size: 12px; }
 }
 
 /* RESPONSIVE 576px–991px (tablet) */
@@ -991,6 +1502,8 @@ body {
     .tabla-cols { grid-template-columns: 130px 100px 1fr 70px; }
     .pendiente-grid { grid-template-columns: 100px 1fr 1fr 70px; }
     .tabla-cols--pend { grid-template-columns: 100px 1fr 1fr 70px; }
+    /* Botón cámara: oculto en tablet (no tiene captura de cámara táctil garantizada) */
+    .btn-cargar-camara { display: none !important; }
 }
 
 /* RESPONSIVE ≥ 992px (lg Bootstrap - layout 3 columnas)  */
@@ -1453,6 +1966,12 @@ body {
     display: none; /* siempre oculto en pantalla */
 }
 
+/* PRINT-TICKET-LINK: <a>/<span> proxy del ticket al imprimir.
+   Oculto en pantalla; visible solo en @media print. */
+.print-ticket-link {
+    display: none;
+}
+
 /* ══════════════════════════════════
    PRINT STYLES
 ══════════════════════════════════ */
@@ -1489,6 +2008,29 @@ body {
     #listaPendientes textarea,
     .foto-caption {
         display: none !important;
+    }
+    /* Ticket: ocultar widget, mostrar proxy enlace */
+    .ticket-widget { display: none !important; }
+    .btn-ticket-url { display: none !important; }
+
+    /* Proxy de ticket — siempre visible en impresión */
+    .print-ticket-link {
+        display: inline-block !important;
+        font-size: 11px !important;
+        font-weight: 700 !important;
+        color: #1a56db !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+
+    /* Enlace clicable: subrayado y color azul forzado */
+    a.print-ticket-link {
+        color: #1a56db !important;
+        text-decoration: underline !important;
+        text-underline-offset: 2px !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+        cursor: pointer !important;
     }
     /* Página A4 */
     @page { size: A4; margin: 10mm 12mm; }
@@ -1707,6 +2249,14 @@ body {
 
 .btn-cargar-pc:active { transform: scale(.97); }
 
+/* Botón cámara directa: oculto en desktop, visible solo en móvil (<576px) */
+.btn-cargar-camara {
+    display: none;
+    background: #f0f7ff;
+    border-color: var(--azul-400);
+    color: var(--azul-700);
+}
+
 .url-dimensiones { margin-left: -2rem; padding: 5px 10px 5px; }
 
 /* Ocultar zona de carga ya consolidado en @media print principal) */
@@ -1768,6 +2318,10 @@ body {
 
 /* CAMPO CON ERROR DE VALIDACIÓN */
 .campo-error { border-color: #e53e3e !important; background-color: #fff5f5 !important; box-shadow: 0 0 0 3px rgba(229, 62, 62, .15) !important; }
+/* campo-ok: textarea con contenido válido — referenciado en marcarCampo() */
+.campo-ok { border-color: var(--azul-200) !important; background-color: var(--gris-50) !important; }
+/* campo-vacio: estado inicial sin contenido — clase legacy, sin efecto visual deliberado */
+/* .campo-vacio { sin estilos — mantiene apariencia neutral } */
 
 .tarea-fotos-row.campo-error { background: #fff5f5 !important; border-top-color: #e53e3e !important; box-shadow: inset 0 0 0 1.5px #e53e3e !important; }
 
@@ -1846,6 +2400,15 @@ body {
 
 /* Estado de alerta - Fase 2 (30 min de limpieza) */
 .ab-timer.alerta { color: #FAC775; background: rgba(250, 199, 117, 0.1); border-color: rgba(250, 199, 117, 0.4); animation: ab-parpadeo 1s step-end infinite; }
+
+/* ── SAFE AREA INSETS (iPhone con notch / Dynamic Island) ───
+   Garantiza que la action-bar fija no quede detrás del home indicator */
+.action-bar {
+    padding-bottom: calc(11px + env(safe-area-inset-bottom, 0px));
+}
+@supports not (padding-bottom: env(safe-area-inset-bottom)) {
+    .action-bar { padding-bottom: 11px; }
+}
 
 @keyframes ab-parpadeo {
     0%, 100% { opacity: 1; }
