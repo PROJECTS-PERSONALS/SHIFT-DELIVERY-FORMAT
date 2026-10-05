@@ -36,11 +36,12 @@ var ANALISTAS = [
 var ID_TAREA_TURNO = 'tarea-turno-automatica'; /* Tarea de inicio de turno (primera) */
 var ID_TAREA_MAESTRA = 'tarea-entrega-maestra'; /* Tarea R-000000 Entrega de turno (última) */
 
-/* HARD RESET AL CARGAR */
-window.addEventListener('load', function () { _hardReset(); });
+/* _hardReset ya NO se dispara automáticamente al cargar.
+   Solo se llama desde el botón "Limpiar" o cuando el temporizador expira.
+   Antes disparaba en cada load/pageshow, destruyendo el estado guardado. */
 
-/* También en pageshow para cubrir bfcache en Safari/Firefox */
-window.addEventListener('pageshow', function (e) { if (e.persisted) { _hardReset(); } });
+/* Clave de localStorage para el estado del formulario (declarada aquí para que _hardReset pueda usarla) */
+var _LS_KEY = 'entregaTurno_v2';
 
 /**
  * Limpieza total del estado de la aplicación.
@@ -48,9 +49,11 @@ window.addEventListener('pageshow', function (e) { if (e.persisted) { _hardReset
  * vacía listas y reinicia contadores.
  */
 function _hardReset() {
-	/* 1. Limpiar cualquier dato persistido en storage */
-	/* localStorage: solo el botón Limpiar lo borra */
-	try { sessionStorage.clear(); } catch (e) { /* ídem */ }
+	/* 1. Limpiar datos persistidos */
+	try { sessionStorage.clear(); } catch (e) { /* silencioso */ }
+	try { localStorage.removeItem(_LS_KEY); } catch (e) { }
+	/* IDB puede no estar definido si _hardReset se llama muy temprano */
+	if (typeof IDB !== 'undefined') IDB.borrarTodo();
 	/* 2. Turno */
 	var turnoSelect = document.getElementById('turnoSelect');
 	var turnoPill = document.getElementById('turnoPill');
@@ -155,7 +158,7 @@ function initTurnoPill() {
 	select.addEventListener('change', function () {
 		pill.textContent = select.value;
 		_insertarOActualizarTareaTurno(select.value);
-		_sincronizarHorasTareaMaestra(select.value); /*  sincronizar horas R-000000  */
+		_sincronizarHorasTareaMaestra(select.value); /* sincronizar horas R-000000 */
 		_insertarOActualizarTareaMaestra(); /* garantizar tarea R-000000 al final */
 		_renderObligatorias(select.value); /* actualizar panel de obligatorias */
 	});
@@ -166,11 +169,20 @@ function initFecha() {
 	var el = document.getElementById('fechaInput');
 	if (!el) return;
 	var hoy = new Date();
-	el.value = hoy.getFullYear() + '-' + String(hoy.getMonth() + 1).padStart(2, '0') + '-' + String(hoy.getDate()).padStart(2, '0');
-	el.addEventListener('change', guardarEstadoDebounced);
-	/* Ciudad: también guarda al escribir */
+	/* Solo asignar fecha si el campo está vacío — no sobreescribir en initFecha() */
+	if (!el.value) {
+		el.value = hoy.getFullYear() + '-' + String(hoy.getMonth() + 1).padStart(2, '0') + '-' + String(hoy.getDate()).padStart(2, '0');
+	}
+	/* Evitar listeners duplicados usando una bandera */
+	if (!el._fechaListenerAttached) {
+		el.addEventListener('change', guardarEstadoDebounced);
+		el._fechaListenerAttached = true;
+	}
 	var ciudadEl = document.getElementById('ciudadInput');
-	if (ciudadEl) ciudadEl.addEventListener('input', guardarEstadoDebounced);
+	if (ciudadEl && !ciudadEl._ciudadListenerAttached) {
+		ciudadEl.addEventListener('input', guardarEstadoDebounced);
+		ciudadEl._ciudadListenerAttached = true;
+	}
 }
 
 /* CONTADORES */
@@ -241,7 +253,7 @@ function _insertarOActualizarTareaTurno(turno) {
 	fila.querySelectorAll('textarea').forEach(function (ta) { autoResize(ta); });
 }
 
-/*  TAREA MAESTRA R-000000 "Entrega de turno" (última)  */
+/* TAREA MAESTRA R-000000 "Entrega de turno" (última) */
 /**
  * Inserta (o reposiciona si ya existe) la tarea maestra R-000000.
  * Siempre debe ser la ÚLTIMA tarea de la lista.
@@ -374,7 +386,7 @@ function agregarTarea() {
 						svgLinkIcono() +
 					'</button>' +
 					'<input type="url" class="input-ticket-url"' +
-						' placeholder="https://hgmdesk.hgm.gov.co/…"' +
+						' placeholder="https://hgmdesk.hgm.gov.co/pages/UI.php?operation=details&class=UserRequest&id=…"' +
 						' autocomplete="off"' +
 						' aria-label="URL del ticket (opcional)">' +
 				'</div>' +
@@ -390,7 +402,19 @@ function agregarTarea() {
 			'<span class="fotos-indicador" id="fotosIndicador-' + id + '">' + svgFotoIcono() + '<span> Sin imágenes adjuntas </span>' + '</span>' +
 			/* Bloque de carga solo desde PC */
 			'<div class="url-imagen-wrap" id="urlWrap-' + id + '">' +
-				'<label class="btn-cargar-pc" title="Seleccionar imagen o video desde tu equipo">' + svgFotoIcono() + ' Agregar imagen(es)/video(s) <span class="asterisco-obligatorio" aria-hidden="true"> * </span>' + '<input type="file" accept="image/*,video/*" multiple hidden' + ' onchange="cargarImagenArchivo(this,' + id + ')">' + '</label>' +
+				/* Botón galería (múltiples archivos) */
+				'<label class="btn-cargar-pc btn-cargar-galeria" title="Seleccionar imagen o video desde tu equipo">' +
+					svgFotoIcono() +
+					'<span class="btn-cargar-texto-galeria"> Galería / Archivo </span>' +
+					'<span class="asterisco-obligatorio" aria-hidden="true"> * </span>' +
+					'<input type="file" accept="image/*,video/*" multiple hidden onchange="cargarImagenArchivo(this,' + id + ')">' +
+				'</label>' +
+				/* Botón cámara directa (solo móvil — oculto en desktop por CSS) */
+				'<label class="btn-cargar-pc btn-cargar-camara" title="Tomar foto o video con la cámara">' +
+					svgCamaraIcono() +
+					'<span> Cámara </span>' +
+					'<input type="file" accept="image/*,video/*" capture="environment" hidden onchange="cargarImagenArchivo(this,' + id + ')">' +
+				'</label>' +
 				/* Controles de dimensiones */
 				'<div class="url-dimensiones" id="dims-' + id + '" hidden>' +
 					'<label class="dims-label"> Anchura </label>' +
@@ -427,15 +451,15 @@ function agregarTarea() {
  * Carga una o varias imágenes seleccionadas desde el equipo del usuario.
  * Usa FileReader para leer el archivo como Data URL y crear el thumbnail.
  * No muestra el error si el archivo carga correctamente.
- * @param {HTMLInputElement} input   El <input type="file"> que disparó el evento
- * @param {number}           id      ID de la fila de tarea
+ * @param {HTMLInputElement} input El <input type="file"> que disparó el evento
+ * @param {number} id ID de la fila de tarea
  */
-/* ─────────────────────────────────────────────────────────────
-   _crearPreviewItem
-   Crea el bloque completo preview-item (thumb + caption) para
-   una imagen o un video y lo inserta en el grid de previews.
-   Parámetros compartidos por tareas y pendientes.
-   ───────────────────────────────────────────────────────────── */
+/* 
+* _crearPreviewItem
+* Crea el bloque completo preview-item (thumb + caption) para
+* una imagen o un video y lo inserta en el grid de previews.
+* Parámetros compartidos por tareas y pendientes.
+*/
 function _crearPreviewItem(dataUrl, esVideo, nombreArchivo, previews, indicador, dimsEl, dimWEl, dimHEl, errorEl) {
 	var anchoInicial = 600;
 
@@ -451,7 +475,6 @@ function _crearPreviewItem(dataUrl, esVideo, nombreArchivo, previews, indicador,
 		wrap.dataset.ratio = ratio;
 		wrap.style.width = anchoInicial + 'px';
 		wrap.style.height = altoInicial + 'px';
-
 		/* Elemento multimedia: <video> o <img> */
 		var mediaEl;
 		if (esVideo) {
@@ -492,7 +515,6 @@ function _crearPreviewItem(dataUrl, esVideo, nombreArchivo, previews, indicador,
 
 		wrap.appendChild(mediaEl);
 		wrap.appendChild(btnDel);
-
 		/* Caption */
 		var captionWrap = document.createElement('div');
 		captionWrap.className = 'foto-caption-wrap';
@@ -502,7 +524,7 @@ function _crearPreviewItem(dataUrl, esVideo, nombreArchivo, previews, indicador,
 		caption.className = 'foto-caption';
 		caption.placeholder = 'Descripción breve de la evidencia…';
 		caption.rows = 2;
-		caption.setAttribute('aria-label', 'Descripción de la ' + (esVideo ? 'video' : 'imagen'));
+		caption.setAttribute('aria-label', esVideo ? 'Descripción del video' : 'Descripción de la imagen');
 		caption.addEventListener('input', guardarEstadoDebounced);
 		_activarAutoResize(caption);
 
@@ -535,11 +557,11 @@ function _crearPreviewItem(dataUrl, esVideo, nombreArchivo, previews, indicador,
 	}
 }
 
-/* ─────────────────────────────────────────────────────────────
-   _procesarArchivos
-   Itera sobre un FileList/Array y delega a _crearPreviewItem.
-   Acepta imágenes y videos; rechaza otros tipos.
-   ───────────────────────────────────────────────────────────── */
+/* 
+* _procesarArchivos
+* Itera sobre un FileList/Array y delega a _crearPreviewItem.
+* Acepta imágenes y videos; rechaza otros tipos.
+*/
 function _procesarArchivos(archivos, previews, indicador, dimsEl, dimWEl, dimHEl, errorEl) {
 	archivos.forEach(function (archivo) {
 		var esImagen = archivo.type.startsWith('image/');
@@ -555,11 +577,11 @@ function _procesarArchivos(archivos, previews, indicador, dimsEl, dimWEl, dimHEl
 	});
 }
 
-/* ─────────────────────────────────────────────────────────────
-   _activarDropZone
-   Agrega drag & drop a un elemento .tarea-fotos-row o .pend-fotos-row.
-   Al soltar archivos llama a _procesarArchivos con los IDs correctos.
-   ───────────────────────────────────────────────────────────── */
+/* 
+* _activarDropZone
+* Agrega drag & drop a un elemento .tarea-fotos-row o .pend-fotos-row.
+* Al soltar archivos llama a _procesarArchivos con los IDs correctos.
+*/
 function _activarDropZone(fotosRow, esPendiente, id) {
 	if (!fotosRow || fotosRow.dataset.dropActivo) return;
 	fotosRow.dataset.dropActivo = '1';
@@ -568,12 +590,12 @@ function _activarDropZone(fotosRow, esPendiente, id) {
 
 	function _getEls() {
 		return {
-			previews:  document.getElementById(prefijo + 'previews-'       + id),
+			previews: document.getElementById(prefijo + 'previews-' + id),
 			indicador: document.getElementById(prefijo + 'fotosIndicador-' + id),
-			dimsEl:    document.getElementById(prefijo + 'dims-'           + id),
-			dimWEl:    document.getElementById(prefijo + 'dimW-'           + id),
-			dimHEl:    document.getElementById(prefijo + 'dimH-'           + id),
-			errorEl:   document.getElementById(prefijo + 'urlError-'       + id)
+			dimsEl: document.getElementById(prefijo + 'dims-' + id),
+			dimWEl: document.getElementById(prefijo + 'dimW-' + id),
+			dimHEl: document.getElementById(prefijo + 'dimH-' + id),
+			errorEl: document.getElementById(prefijo + 'urlError-' + id)
 		};
 	}
 
@@ -609,12 +631,12 @@ function _activarDropZone(fotosRow, esPendiente, id) {
 
 /* CARGAR IMAGEN / VIDEO — Tareas */
 function cargarImagenArchivo(input, id) {
-	var errorEl   = document.getElementById('urlError-'       + id);
-	var previews  = document.getElementById('previews-'       + id);
+	var errorEl = document.getElementById('urlError-' + id);
+	var previews = document.getElementById('previews-' + id);
 	var indicador = document.getElementById('fotosIndicador-' + id);
-	var dimsEl    = document.getElementById('dims-'           + id);
-	var dimWEl    = document.getElementById('dimW-'           + id);
-	var dimHEl    = document.getElementById('dimH-'           + id);
+	var dimsEl = document.getElementById('dims-' + id);
+	var dimHEl = document.getElementById('dimH-' + id);
+	var dimWEl = document.getElementById('dimW-' + id);
 
 	var archivos = Array.prototype.slice.call(input.files);
 	if (!archivos.length) return;
@@ -686,8 +708,8 @@ function redimensionarDesdeAltura(id) {
 /* MÓDULO: ACTIVIDADES DEL TURNO */
 /**
  * Catálogo completo de actividades.
- * tipo:    'obligatoria' | 'opcional'
- * turnos:  null = todos los turnos | array de valores de turno = solo esos
+ * tipo: 'obligatoria' | 'opcional'
+ * turnos: null = todos los turnos | array de valores de turno = solo esos
  *
  * Regla README (sección 6):
  *   - Obligatoria A = todos los turnos (al imprimir/generar el informe)
@@ -736,8 +758,7 @@ var ACTIVIDADES = [
 		nombre: 'Recorridos de verificación de monitores de signos vitales, sistemas de llamado de enfermería, plataformas Avaya, Álear y televisores Netux',
 		descripcion: 'Reinicio y validación operativa de servidores, sistemas Avaya, monitores, dispositivos de llamado de enfermería y soluciones de los proveedores Netux y Álear. Verificación del estado de monitores de signos vitales y escalamiento a Ingeniería Biomédica en caso de incidentes.'
 	},
-
-	/*  OPCIONALES  */
+	/* OPCIONALES */
 	{
 		id: 'OPC-A',
 		letra: 'A',
@@ -884,7 +905,7 @@ function _renderObligatorias(turno) {
 	});
 }
 
-/*  CREAR FILA DE ACTIVIDAD  */
+/* CREAR FILA DE ACTIVIDAD */
 /**
  * @param {Object} act Objeto de actividad del catálogo ACTIVIDADES
  * @param {string|null} turno Turno activo (para rellenar horas en obligatorias)
@@ -1040,12 +1061,183 @@ function marcarCampo(el) {
 	}
 }
 
+/* 
+   MÓDULO: PERSISTENCIA DE MEDIOS (IndexedDB)
+   Guarda y restaura data-URLs de imágenes y videos adjuntos.
+   IndexedDB no tiene el límite de ~5 MB del localStorage, soporta cientos de MB y persiste entre recargas, cierres de pestaña y reinicios del navegador.
+   Clave de objeto: "filaId_indiceMedia" = { dataUrl, esVideo, nombre, caption, ratio }
+*/
+var IDB = (function () {
+	var DB_NAME    = 'entregaTurno_media';
+	var DB_VERSION = 1;
+	var STORE      = 'media';
+	var _db        = null;
+
+	function _abrirDB(cb) {
+		if (_db) { cb(_db); return; }
+		var req = indexedDB.open(DB_NAME, DB_VERSION);
+		req.onupgradeneeded = function (e) {
+			e.target.result.createObjectStore(STORE);
+		};
+		req.onsuccess = function (e) {
+			_db = e.target.result;
+			cb(_db);
+		};
+		req.onerror = function () { cb(null); };
+	}
+
+	function guardar(clave, valor, cb) {
+		_abrirDB(function (db) {
+			if (!db) { if (cb) cb(false); return; }
+			var tx = db.transaction(STORE, 'readwrite');
+			tx.objectStore(STORE).put(valor, clave);
+			tx.oncomplete = function () { if (cb) cb(true); };
+			tx.onerror    = function () { if (cb) cb(false); };
+		});
+	}
+
+	function leer(clave, cb) {
+		_abrirDB(function (db) {
+			if (!db) { cb(null); return; }
+			var tx  = db.transaction(STORE, 'readonly');
+			var req = tx.objectStore(STORE).get(clave);
+			req.onsuccess = function () { cb(req.result || null); };
+			req.onerror   = function () { cb(null); };
+		});
+	}
+
+	function listarClaves(prefijo, cb) {
+		_abrirDB(function (db) {
+			if (!db) { cb([]); return; }
+			var tx    = db.transaction(STORE, 'readonly');
+			var req   = tx.objectStore(STORE).getAllKeys();
+			req.onsuccess = function () {
+				var todas = req.result || [];
+				cb(prefijo ? todas.filter(function (k) { return k.indexOf(prefijo) === 0; }) : todas);
+			};
+			req.onerror = function () { cb([]); };
+		});
+	}
+
+	function borrarPorPrefijo(prefijo, cb) {
+		_abrirDB(function (db) {
+			if (!db) { if (cb) cb(); return; }
+			var tx    = db.transaction(STORE, 'readwrite');
+			var store = tx.objectStore(STORE);
+			var req   = store.getAllKeys();
+			req.onsuccess = function () {
+				var keys = (req.result || []).filter(function (k) {
+					return !prefijo || k.indexOf(prefijo) === 0;
+				});
+				keys.forEach(function (k) { store.delete(k); });
+			};
+			tx.oncomplete = function () { if (cb) cb(); };
+		});
+	}
+
+	function borrarTodo(cb) {
+		_abrirDB(function (db) {
+			if (!db) { if (cb) cb(); return; }
+			var tx = db.transaction(STORE, 'readwrite');
+			tx.objectStore(STORE).clear();
+			tx.oncomplete = function () { if (cb) cb(); };
+		});
+	}
+
+	return { guardar: guardar, leer: leer, listarClaves: listarClaves, borrarPorPrefijo: borrarPorPrefijo, borrarTodo: borrarTodo };
+})();
+
+/* Clave IDB para un preview: "filaId:índice" */
+function _claveMedia(filaId, idx) { return filaId + ':' + idx; }
+/* Guarda todos los medios de todas las filas (tareas + pendientes) en IDB */
+function _guardarMediaIDB() {
+	var filas = document.querySelectorAll(
+		'#listaTareas .tarea-fila:not([data-turno-auto]), #listaPendientes .pendiente-fila'
+	);
+	/* Primero borrar toda la media guardada y reescribir desde cero */
+	IDB.borrarTodo(function () {
+		filas.forEach(function (fila) {
+			var filaId = fila.id || '';
+			var items = fila.querySelectorAll('.preview-item');
+			items.forEach(function (item, idx) {
+				var wrap = item.querySelector('.preview-thumb');
+				var mediaEl = wrap && (wrap.querySelector('video') || wrap.querySelector('img'));
+				var caption = item.querySelector('.foto-caption');
+				if (!mediaEl) return;
+				var dataUrl = mediaEl.src || mediaEl.currentSrc || '';
+				if (!dataUrl || dataUrl === window.location.href) return; /* src vacío */
+				IDB.guardar(_claveMedia(filaId, idx), {
+					dataUrl: dataUrl,
+					esVideo: mediaEl.tagName === 'VIDEO',
+					nombre: mediaEl.alt || mediaEl.getAttribute('aria-label') || '',
+					caption: caption ? caption.value : '',
+					ratio: parseFloat(wrap.dataset.ratio) || 1,
+					ancho: parseInt(wrap.style.width)  || 600
+				});
+			});
+		});
+	});
+}
+
+/* Restaura los medios de una fila desde IDB una vez que la fila ya existe en el DOM */
+function _restaurarMediaFila(filaId, cb) {
+	IDB.listarClaves(filaId + ':', function (claves) {
+		if (!claves.length) { if (cb) cb(); return; }
+		/* Ordenar por índice */
+		claves.sort(function (a, b) {
+			return parseInt(a.split(':')[1]) - parseInt(b.split(':')[1]);
+		});
+		var pendientes = claves.length;
+		claves.forEach(function (clave) {
+			IDB.leer(clave, function (datos) {
+				if (datos) _restaurarPreviewItem(filaId, datos);
+				if (--pendientes === 0 && cb) cb();
+			});
+		});
+	});
+}
+
+/* Reconstruye un preview-item desde los datos guardados en IDB */
+function _restaurarPreviewItem(filaId, datos) {
+	/* Determinar si la fila es tarea o pendiente por el prefijo del ID */
+	var esPendiente = filaId.indexOf('pendiente-') === 0;
+	var prefijo = esPendiente ? 'p' : '';
+	var numId = filaId.replace(/^(tarea-|pendiente-)/, '');
+
+	var previews = document.getElementById(prefijo + 'previews-' + numId);
+	var indicador = document.getElementById(prefijo + 'fotosIndicador-' + numId);
+	var dimsEl = document.getElementById(prefijo + 'dims-' + numId);
+	var dimWEl = document.getElementById(prefijo + 'dimW-' + numId);
+	var dimHEl = document.getElementById(prefijo + 'dimH-' + numId);
+	var errorEl = document.getElementById(prefijo + 'urlError-' + numId);
+
+	if (!previews) return;
+
+	_crearPreviewItem(
+		datos.dataUrl,
+		datos.esVideo,
+		datos.nombre,
+		previews, indicador, dimsEl, dimWEl, dimHEl, errorEl
+	);
+	/* El caption se restaura después de que _crearPreviewItem inserta el elemento
+	   (es asíncrono para imágenes, por lo que usamos un pequeño delay) */
+	if (datos.caption) {
+		setTimeout(function () {
+			var items   = previews.querySelectorAll('.preview-item');
+			var ultimo  = items[items.length - 1];
+			var caption = ultimo && ultimo.querySelector('.foto-caption');
+			if (caption) {
+				caption.value = datos.caption;
+				autoResize(caption);
+			}
+		}, 100);
+	}
+}
+
 /* MÓDULO: PERSISTENCIA LOCAL (localStorage)
 	Guarda y restaura el estado completo del formulario. 
 	Solo el botón "Limpiar" borra los datos guardados.
 */
-
-var _LS_KEY = 'entregaTurno_v2'; /* v2: incluye captions de imágenes */
 
 /**
  * Serializa el estado actual del formulario y lo guarda en localStorage.
@@ -1064,6 +1256,8 @@ function _guardarEstado() {
 		};
 		localStorage.setItem(_LS_KEY, JSON.stringify(estado));
 	} catch (e) { /* file:// o storage lleno - falla silenciosa */ }
+	/* Guardar imágenes y videos en IndexedDB (sin límite de tamaño) */
+	_guardarMediaIDB();
 }
 
 /* Versión con debounce: espera 600ms tras el último cambio antes de guardar */
@@ -1124,8 +1318,9 @@ function _restaurarEstado() {
 		if (sel) {
 			sel.value = estado.turno;
 			if (pill) pill.textContent = estado.turno;
-			/* Disparar la tarea automática y el panel de obligatorias */
+			/* Disparar tarea de turno, tarea maestra y panel de obligatorias */
 			_insertarOActualizarTareaTurno(estado.turno);
+			_insertarOActualizarTareaMaestra(); /* crear R-000000 antes de restaurar tareas manuales */
 			_renderObligatorias(estado.turno);
 			_actualizarVisibilidadOpcionales(true);
 		}
@@ -1134,11 +1329,10 @@ function _restaurarEstado() {
 	var entrante = document.getElementById('entranteNombre');
 	if (entrante && estado.entrante) {
 		entrante.value = estado.entrante;
-		/* Rellenar cédula */
 		var cedulaEntrante = document.getElementById('estranteDNI');
 		if (cedulaEntrante) {
-			var analistas = { 'Juan Camilo Henao Jiménez': '1001137159', 'Juan Diego Mazo Lezcano': '1020110871', 'Juan José Santana Garzón': '1022142959', 'Juan Pablo Gaviria Correa': '1152464110', 'Kevin Daniel Mosquera Cordoba': '1076819340', 'William David Jarava Solano': '1104410026', 'Yin Carlos Martinez Perez': '72203802' };
-			cedulaEntrante.value = analistas[estado.entrante] || '';
+			var analistaEntrante = ANALISTAS.find(function (a) { return a.nombre === estado.entrante; });
+			cedulaEntrante.value = analistaEntrante ? analistaEntrante.cedula : '';
 		}
 	}
 	var saliente = document.getElementById('salienteNombre');
@@ -1146,9 +1340,8 @@ function _restaurarEstado() {
 		saliente.value = estado.saliente;
 		var cedulaSaliente = document.getElementById('salienteDNI');
 		if (cedulaSaliente) {
-			var analistas2 = { 'Juan Camilo Henao Jiménez': '1001137159', 'Juan Diego Mazo Lezcano': '1020110871', 'Juan José Santana Garzón': '1022142959', 'Juan Pablo Gaviria Correa': '1152464110', 'Kevin Daniel Mosquera Cordoba': '1076819340', 'William David Jarava Solano': '1104410026', 'Yin Carlos Martinez Perez': '72203802' };
-			cedulaEntrante2 = analistas2[estado.saliente] || '';
-			cedulaSaliente.value = cedulaEntrante2;
+			var analistaSaliente = ANALISTAS.find(function (a) { return a.nombre === estado.saliente; });
+			cedulaSaliente.value = analistaSaliente ? analistaSaliente.cedula : '';
 		}
 	}
 	/* Restaurar filas de tareas (no la automática, esa ya se creó arriba) */
@@ -1162,24 +1355,17 @@ function _restaurarEstado() {
 			var inputs = ultima.querySelectorAll('input[type="text"], input[type="time"], input[type="url"], textarea:not(.foto-caption)');
 			inputs.forEach(function (inp, i) {
 				if (t.valores[i] !== undefined) inp.value = t.valores[i];
-				/* Recalcular altura tras restaurar el valor */
 				if (inp.tagName === 'TEXTAREA') autoResize(inp);
-				/* Si es URL y tiene valor, mostrar el campo automáticamente */
 				if (inp.type === 'url' && inp.value.trim()) {
 					inp.classList.add('visible');
 					var btn = inp.closest('.ticket-widget') && inp.closest('.ticket-widget').querySelector('.btn-ticket-url');
 					if (btn) btn.classList.add('active');
 				}
 			});
-			/* Restaurar captions de imágenes si existen */
-			if (Array.isArray(t.captions) && t.captions.length > 0) {
-				var caps = ultima.querySelectorAll('.foto-caption');
-				caps.forEach(function (c, i) {
-					if (t.captions[i] !== undefined) c.value = t.captions[i];
-					autoResize(c);
-				});
-			}
+			/* Los captions de texto se restauran desde IDB junto con la imagen */
 			if (t.actId) ultima.setAttribute('data-act-id', t.actId);
+			/* Restaurar imágenes/videos desde IndexedDB */
+			_restaurarMediaFila(ultima.id);
 		});
 	}
 	/* Restaurar filas de pendientes */
@@ -1193,22 +1379,15 @@ function _restaurarEstado() {
 			var inputs = ultima.querySelectorAll('input[type="text"], input[type="time"], input[type="url"], textarea:not(.foto-caption)');
 			inputs.forEach(function (inp, i) {
 				if (p.valores[i] !== undefined) inp.value = p.valores[i];
-				/* Recalcular altura tras restaurar el valor */
 				if (inp.tagName === 'TEXTAREA') autoResize(inp);
-				/* Si es URL y tiene valor, mostrar el campo automáticamente */
 				if (inp.type === 'url' && inp.value.trim()) {
 					inp.classList.add('visible');
 					var btn = inp.closest('.ticket-widget') && inp.closest('.ticket-widget').querySelector('.btn-ticket-url');
 					if (btn) btn.classList.add('active');
 				}
 			});
-			if (Array.isArray(p.captions) && p.captions.length > 0) {
-				var caps = ultima.querySelectorAll('.foto-caption');
-				caps.forEach(function (c, i) {
-					if (p.captions[i] !== undefined) c.value = p.captions[i];
-					autoResize(c);
-				});
-			}
+			/* Restaurar imágenes/videos desde IndexedDB */
+			_restaurarMediaFila(ultima.id);
 		});
 	}
 	/* Mostrar mensaje si listas siguen vacías */
@@ -1221,10 +1400,12 @@ function _restaurarEstado() {
 }
 
 /**
- * Borra los datos del localStorage y ejecuta el reset visual. Solo llamado desde el botón "Limpiar".
+ * Borra los datos del formulario de localStorage e IndexedDB.
+ * Solo llamado desde el botón "Limpiar" o al expirar el temporizador.
  */
 function _limpiarLocalStorage() {
 	try { localStorage.removeItem(_LS_KEY); } catch (e) { }
+	IDB.borrarTodo(); /* borrar también imágenes y videos guardados */
 }
 
 /* HELPERS DE ERROR */
@@ -1255,7 +1436,7 @@ function agregarPendiente() {
 				'<div class="ticket-widget">' +
 					'<input type="text" class="input-ticket"' + ' placeholder="Ej: I-160000 / R-160000"' + ' maxlength="30" autocomplete="off"' + ' aria-label="Número de ticket del pendiente">' +
 					'<button type="button" class="btn-ticket-url" title="Agregar hipervínculo al ticket" aria-label="Agregar URL del ticket">' + svgLinkIcono() + '</button>' +
-					'<input type="url" class="input-ticket-url" placeholder="https://hgmdesk.hgm.gov.co/…" autocomplete="off" aria-label="URL del ticket (opcional)">' +
+					'<input type="url" class="input-ticket-url" placeholder="https://hgmdesk.hgm.gov.co/pages/UI.php?operation=details&class=UserRequest&id=…" autocomplete="off" aria-label="URL del ticket (opcional)">' +
 				'</div>' +
 			'</div>' +
 			'<div class="t-cell">' +
@@ -1272,9 +1453,18 @@ function agregarPendiente() {
 		'<div class="tarea-fotos-row pend-fotos-row" id="pfotosRow-' + id + '">' +
 			'<span class="fotos-indicador" id="pfotosIndicador-' + id + '">' + svgFotoIcono() + '<span> Sin imágenes adjuntas </span>' + '</span>' +
 			'<div class="url-imagen-wrap" id="purlWrap-' + id + '">' +
-				/* Botón cargar */
-				'<label class="btn-cargar-pc" title="Seleccionar imagen o video desde tu equipo">' + svgFotoIcono() + ' Agregar imagen(es)/video(s) <span class="asterisco-obligatorio" aria-hidden="true"> * </span>' +
-					'<input type="file" accept="image/*,video/*" multiple hidden' + ' onchange="cargarImagenArchivoPend(this,' + id + ')">' +
+				/* Botón galería pendientes */
+				'<label class="btn-cargar-pc btn-cargar-galeria" title="Seleccionar imagen o video desde tu equipo">' +
+					svgFotoIcono() +
+					'<span class="btn-cargar-texto-galeria"> Galería / Archivo </span>' +
+					'<span class="asterisco-obligatorio" aria-hidden="true"> * </span>' +
+					'<input type="file" accept="image/*,video/*" multiple hidden onchange="cargarImagenArchivoPend(this,' + id + ')">' +
+				'</label>' +
+				/* Botón cámara directa pendientes */
+				'<label class="btn-cargar-pc btn-cargar-camara" title="Tomar foto o video con la cámara">' +
+					svgCamaraIcono() +
+					'<span> Cámara </span>' +
+					'<input type="file" accept="image/*,video/*" capture="environment" hidden onchange="cargarImagenArchivoPend(this,' + id + ')">' +
 				'</label>' +
 				'<div class="url-dimensiones" id="pdims-' + id + '" hidden>' +
 					'<label class="dims-label"> Anchura </label>' +
@@ -1302,61 +1492,16 @@ function agregarPendiente() {
 	_activarDropZone(fotosRowPend, true, id);
 }
 
-/* Helpers reutilizables para zona de imágenes de pendientes */
-/* _crearThumb: versión ligera usada internamente (sin caption).
-   Se conserva por compatibilidad pero ya no se llama desde pendientes. */
-function _crearThumb(url, dataUrl, previews, indicador, dimsEl, dimWEl, dimHEl, errorEl) {
-	var img = new Image();
-	img.onload = function () {
-		ocultarError(errorEl);
-		var ratio = img.naturalWidth / img.naturalHeight;
-		var w = 600, h = Math.round(600 / ratio);
-		var wrap = document.createElement('div');
-		wrap.className = 'preview-thumb';
-		wrap.dataset.ratio = ratio;
-		wrap.style.width = w + 'px';
-		wrap.style.height = h + 'px';
-		var imgEl = document.createElement('img');
-		imgEl.src = dataUrl || url;
-		imgEl.alt = 'Imagen adjunta';
-		var btnDel = document.createElement('button');
-		btnDel.className = 'btn-del-foto';
-		btnDel.innerHTML = '&#10005;';
-		btnDel.title = 'Eliminar imagen';
-		btnDel.type = 'button';
-		btnDel.setAttribute('aria-label', 'Eliminar imagen');
-		btnDel.addEventListener('click', function () {
-			wrap.style.transition = 'opacity .2s, transform .2s';
-			wrap.style.opacity = '0';
-			wrap.style.transform = 'scale(.85)';
-			setTimeout(function () {
-				wrap.remove();
-				if (previews.children.length === 0) {
-					indicador.style.display = '';
-					dimsEl.hidden = true;
-				}
-			}, 200);
-		});
-		wrap.appendChild(imgEl);
-		wrap.appendChild(btnDel);
-		previews.appendChild(wrap);
-		indicador.style.display = 'none';
-		dimsEl.hidden = false;
-		dimWEl.value = w;
-		dimHEl.value = h;
-	};
-	img.onerror = function () { mostrarError(errorEl); };
-	img.src = dataUrl || url;
-}
+/* _crearThumb eliminada (dead code) — reemplazada por _crearPreviewItem */
 
 /* CARGAR IMAGEN / VIDEO — Pendientes */
 function cargarImagenArchivoPend(input, id) {
-	var errorEl   = document.getElementById('purlError-'       + id);
-	var previews  = document.getElementById('ppreviews-'       + id);
+	var errorEl = document.getElementById('purlError-' + id);
+	var previews = document.getElementById('ppreviews-' + id);
 	var indicador = document.getElementById('pfotosIndicador-' + id);
-	var dimsEl    = document.getElementById('pdims-'           + id);
-	var dimWEl    = document.getElementById('pdimW-'           + id);
-	var dimHEl    = document.getElementById('pdimH-'           + id);
+	var dimsEl = document.getElementById('pdims-' + id);
+	var dimWEl = document.getElementById('pdimW-' + id);
+	var dimHEl = document.getElementById('pdimH-' + id);
 
 	var archivos = Array.prototype.slice.call(input.files);
 	if (!archivos.length) return;
@@ -1395,6 +1540,9 @@ function redimensionarDesdeAlturaPend(id) {
 		nuevoAncho = Math.round(nuevoAlto * ratio);
 		wrap.style.width = nuevoAncho + 'px';
 		wrap.style.height = nuevoAlto + 'px';
+		/* Sincronizar ancho del caption — igual que redimensionarPend */
+		var captionWrap = wrap.parentElement && wrap.parentElement.querySelector('.foto-caption-wrap');
+		if (captionWrap) captionWrap.style.width = nuevoAncho + 'px';
 	});
 	dimWEl.value = nuevoAncho;
 }
@@ -1414,14 +1562,22 @@ function eliminarFila(filaId, contenedorId, tipo) {
 		var cont = document.getElementById(contenedorId);
 		var filas = cont.querySelectorAll('.tarea-fila, .pendiente-fila');
 		if (filas.length === 0) mostrarMsgVacio(contenedorId, tipo);
+		/* Re-anclar tarea maestra al final si se eliminó una tarea */
+		if (contenedorId === 'listaTareas') _asegurarTareaMaestraAlFinal();
+		guardarEstadoDebounced();
 	}, 220);
 }
 
 /* LIMPIAR FORMULARIO */
 function limpiarFormulario() {
 	if (!confirm('¿Desea limpiar todo el formulario?\nEsta acción no se puede deshacer.')) return;
+	/* Borrar datos guardados para que no se restauren al recargar */
+	_limpiarLocalStorage();
 
 	document.getElementById('ciudadInput').value = 'Medellín';
+	/* Limpiar fecha explícitamente para que initFecha() la reinicie con hoy */
+	var fechaEl = document.getElementById('fechaInput');
+	if (fechaEl) fechaEl.value = '';
 	initFecha();
 
 	var select = document.getElementById('turnoSelect');
@@ -1445,7 +1601,6 @@ function limpiarFormulario() {
 
 	mostrarMsgVacio('listaTareas', 'tarea');
 	mostrarMsgVacio('listaPendientes', 'pendiente');
-
 	/* Panel de obligatorias: reset sin turno */
 	_renderObligatorias();
 }
@@ -1464,8 +1619,8 @@ function validarParaImprimir() {
 		errores.push('• Selecciona un Turno principal antes de imprimir.');
 	}
 	/* 2. Tarea Maestra R-000000 obligatoria - se genera al seleccionar turno */
-	var tapeaMaestraExiste = document.getElementById(ID_TAREA_MAESTRA);
-	if (!tapeaMaestraExiste) {
+	var tareaMaestraExiste = document.getElementById(ID_TAREA_MAESTRA);
+	if (!tareaMaestraExiste) {
 		errores.push('• La tarea "Entrega de turno" (R-000000) es obligatoria y debe generarse seleccionando un turno.');
 	}
 	/* 3. Tarea de inicio de turno R-000001 obligatoria */
@@ -1539,8 +1694,18 @@ function validarParaImprimir() {
 			fotosRow.classList.remove('campo-error');
 		}
 	});
-	/* 10. Tickets obligatorios en pendientes */
+	/* 10. Descripción obligatoria en pendientes */
 	var filasPend = document.querySelectorAll('#listaPendientes .pendiente-fila');
+	filasPend.forEach(function (fila, idx) {
+		var desc = fila.querySelector('textarea.campo-requerido');
+		if (!desc || !desc.value.trim()) {
+			errores.push('• Pendiente ' + (idx + 1) + ': el campo Descripción es obligatorio.');
+			if (desc) desc.classList.add('campo-error');
+		} else if (desc) {
+			desc.classList.remove('campo-error');
+		}
+	});
+	/* 11. Tickets obligatorios en pendientes */
 	filasPend.forEach(function (fila, idx) {
 		var ticket = fila.querySelector('.input-ticket');
 		if (!ticket || !ticket.value.trim()) {
@@ -1576,7 +1741,6 @@ function imprimirDocumento() {
 	if (!validarParaImprimir()) return;
 
 	var reemplazos = [];
-
 	/* 1a. Sustituir textareas por divs limpios (comportamiento anterior) */
 	document.querySelectorAll(
 		'#listaTareas textarea, #listaPendientes textarea, .foto-caption'
@@ -1588,7 +1752,6 @@ function imprimirDocumento() {
 		ta.style.display = 'none';
 		reemplazos.push({ el: ta, proxy: proxy });
 	});
-
 	/* 1b. Sustituir ticket-widget por badge con hipervínculo (si tiene URL) */
 	document.querySelectorAll('.ticket-widget').forEach(function (widget) {
 		var ticketInput = widget.querySelector('.input-ticket');
@@ -1616,10 +1779,8 @@ function imprimirDocumento() {
 		widget.style.display = 'none';
 		reemplazos.push({ el: widget, proxy: proxy });
 	});
-
 	/* 2. Imprimir */
 	window.print();
-
 	/* 3. Restaurar — SOLO tras afterprint (se dispara cuando el usuario cierra el diálogo
 	   o termina de guardar el PDF). El setTimeout es fallback largo (30s) para navegadores
 	   que no soporten afterprint; no interferirá con el guardado del PDF. */
@@ -1654,8 +1815,8 @@ function initBotones() {
 	document.getElementById('btnAgregarTarea').addEventListener('click', agregarTarea);
 	document.getElementById('btnAgregarPendiente').addEventListener('click', agregarPendiente);
 	document.getElementById('btnPrint').addEventListener('click', imprimirDocumento);
+	document.getElementById('btnEmail').addEventListener('click', abrirModalEmail);
 	document.getElementById('btnClear').addEventListener('click', limpiarFormulario);
-
 	/* Delegación: toggle del campo URL de ticket en cualquier fila (tareas y pendientes) */
 	document.addEventListener('click', function (e) {
 		var btn = e.target.closest('.btn-ticket-url');
@@ -1666,12 +1827,27 @@ function initBotones() {
 		btn.title = activo ? 'Ocultar campo de URL' : 'Agregar hipervínculo al ticket';
 		if (activo) urlInput.focus();
 	});
+
+	/* ── Modal de email ── */
+	var emailClose  = document.getElementById('btnEmailClose');
+	var emailCancel = document.getElementById('btnEmailCancel');
+	var emailSend   = document.getElementById('btnEmailSend');
+	var emailOverlay = document.getElementById('emailModal');
+	if (emailClose)   emailClose.addEventListener('click',  cerrarModalEmail);
+	if (emailCancel)  emailCancel.addEventListener('click', cerrarModalEmail);
+	if (emailSend)    emailSend.addEventListener('click',   enviarEmailOutlook);
+	if (emailOverlay) {
+		emailOverlay.addEventListener('click', function (e) {
+			if (e.target === emailOverlay) cerrarModalEmail();
+		});
+	}
+	document.addEventListener('keydown', function (e) {
+		if (e.key === 'Escape' && emailOverlay && !emailOverlay.hidden) cerrarModalEmail();
+	});
 }
 
 /* SELECT DINÁMICO DE ANALISTAS */
-/**
- * Inicializa los <select> de Empleado Entrante y Saliente. Al seleccionar un nombre, rellena automáticamente la cédula correspondiente.
- */
+/* Inicializa los <select> de Empleado Entrante y Saliente. Al seleccionar un nombre, rellena automáticamente la cédula correspondiente. */
 function initSelectAnalistas() {
 	_bindAnalista('entranteNombre', 'estranteDNI');
 	_bindAnalista('salienteNombre', 'salienteDNI');
@@ -1728,6 +1904,14 @@ function svgFotoIcono() {
 				'<rect x="2" y="4" width="16" height="13" rx="2" stroke="currentColor" stroke-width="1.4"/>' +
 				'<circle cx="10" cy="10.5" r="2.5" stroke="currentColor" stroke-width="1.4"/>' +
 				'<path d="M7 4l1.2-2h3.6L13 4" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/>' +
+			'</svg>';
+}
+
+/* Ícono de cámara para el botón de captura directa */
+function svgCamaraIcono() {
+	return '<svg viewBox="0 0 20 20" fill="none" style="width:13px;height:13px;flex-shrink:0;color:#2563c4">' +
+				'<path d="M2 7a2 2 0 0 1 2-2h.5l1-2h5l1 2H17a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V7z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/>' +
+				'<circle cx="10" cy="11" r="2.5" stroke="currentColor" stroke-width="1.4"/>' +
 			'</svg>';
 }
 
@@ -1808,8 +1992,15 @@ function svgAlerta() {
 	 */
 	function limpiarProyecto() {
 		if (_intervalo) { clearInterval(_intervalo); _intervalo = null; }
-		try { localStorage.clear(); } catch (e) { }
-		location.reload();
+		/* Borrar solo las claves propias: formulario + timers + medios IDB.
+		   localStorage.clear() borraba TAMBIÉN los timestamps del timer,
+		   causando un loop de reinicios. */
+		try {
+			localStorage.removeItem(_LS_KEY);     /* formulario */
+			localStorage.removeItem(TM_KEY_8H);   /* timer fase 1 */
+			localStorage.removeItem(TM_KEY_30M);  /* timer fase 2 */
+		} catch (e) { }
+		IDB.borrarTodo(function () { location.reload(); });
 	}
 	/* Exponer globalmente por si se necesita desde otros contextos */
 	window.limpiarProyecto = limpiarProyecto;
@@ -1884,7 +2075,6 @@ function svgAlerta() {
 			clearInterval(_intervalo);
 			_intervalo = null;
 			if (display8h) display8h.textContent = '00:00:00';
-
 			/* Mostrar alerta y arrancar Fase 2 */
 			alert(
 				'El tiempo de gracia de 8 horas ha terminado.\n\n' +
@@ -1921,7 +2111,6 @@ function svgAlerta() {
 				return;
 			}
 		}
-
 		/* Verificar si ya hay una Fase 1 activa */
 		var fin8h = _leerTimestamp(TM_KEY_8H);
 		if (fin8h) {
@@ -1938,13 +2127,11 @@ function svgAlerta() {
 			}
 			return;
 		}
-
 		/* Primera vez: crear timestamp de Fase 1 */
 		fin8h = ahora + DUR_8H;
 		_guardarTimestamp(TM_KEY_8H, fin8h);
 		_iniciarFase1(fin8h);
 	}
-
 	/* Integración con limpiarFormulario existente Al pulsar "Limpiar" también se resetean los temporizadores. */
 	var _origLimpiar = window.limpiarFormulario;
 	window.limpiarFormulario = function () {
@@ -1958,10 +2145,140 @@ function svgAlerta() {
 		_guardarTimestamp(TM_KEY_8H, fin8h);
 		_iniciarFase1(fin8h);
 	};
-
 	/* Arranque al cargar el DOM */
 	document.addEventListener('DOMContentLoaded', function () {
 		initTemporizadores();
 	});
 
 })();
+
+/* 
+   MÓDULO: ENVÍO DE CORREO ELECTRÓNICO
+   Genera un correo pre-rellenado con la plantilla oficial del HGM
+   y lo abre en Outlook mediante mailto:.
+   No requiere servidor ni dependencias externas.
+*/
+
+/* Mapa analista archivo de firma en la carpeta img/ */
+var FIRMAS_ANALISTAS = {
+	'Juan Camilo Henao Jiménez': 'img/firma_juan_camilo_henao.png',
+	'Juan Diego Mazo Lezcano':'img/firma_juan_diego_mazo.png',
+	'Juan José Santana Garzón': 'img/firma_juan_jose_santana.png',
+	'Juan Pablo Gaviria Correa': 'img/firma_juan_pablo_gaviria.png',
+	'Kevin Daniel Mosquera Cordoba': 'img/firma_kevin_mosquera.png',
+	'William David Jarava Solano': 'img/firma_william_jarava.png',
+	'Yin Carlos Martinez Perez': 'img/firma_yin_martinez.png'
+};
+
+/* Devuelve un string con los datos actuales del formulario para el cuerpo del correo */
+function _buildEmailData() {
+	var turno    = (document.getElementById('turnoSelect') || {}).value || 'Sin definir';
+	var fecha    = (document.getElementById('fechaInput')  || {}).value || '';
+	var ciudad   = (document.getElementById('ciudadInput') || {}).value || 'Medellín';
+	var saliente = (document.getElementById('salienteNombre') || {}).value || '';
+	/* Formatear fecha DD/MM/AAAA → texto legible */
+	var fechaTexto = fecha;
+	if (fecha) {
+		try {
+			var partes = fecha.split('-');
+			fechaTexto = partes[2] + '/' + partes[1] + '/' + partes[0];
+		} catch (e) { fechaTexto = fecha; }
+	}
+
+	return { turno: turno, fecha: fechaTexto, ciudad: ciudad, saliente: saliente };
+}
+
+/* Construye el asunto del correo */
+function _buildAsunto(data) {
+	return 'Se Hace La Respectiva Entrega De Turno Del Día ' + (data.fecha || 'DD/MM/AAAA');
+}
+
+/* Construye el cuerpo del correo con la plantilla oficial */
+function _buildCuerpo(data) {
+	var turnoTexto = data.turno !== 'Sin definir'
+		? data.turno.replace(' - ', ' a ').replace('am', 'a.m').replace('pm', 'p.m')
+		: '06:00 a.m a 14:00 p.m';
+
+	return (
+		'Buenos Días, Tardes y/o Noches, Cordial saludo.\n\n' +
+		'Se realiza la respectiva entrega de turno, en la cual se documentan las actividades ejecutadas ' +
+		'durante el transcurso del turno ' + turnoTexto + ', con el fin de facilitar la continuidad ' +
+		'operativa al siguiente compañero.\n\n' +
+		'Quedamos atentos a cualquier novedad.\n\n' +
+		'Cordialmente,\n' +
+		(data.saliente ? data.saliente : '(Analista saliente)')
+	);
+}
+
+/* Abre el modal y pre-rellena todos los campos */
+function abrirModalEmail() {
+	var modal = document.getElementById('emailModal');
+	if (!modal) return;
+
+	var data = _buildEmailData();
+	/* Rellenar campos */
+	document.getElementById('emailAsunto').value  = _buildAsunto(data);
+	document.getElementById('emailCuerpo').value  = _buildCuerpo(data);
+	/* Mostrar/ocultar firma según el analista saliente */
+	var firmaImg    = document.getElementById('emailFirmaImg');
+	var firmaSinImg = document.getElementById('emailFirmaSinImg');
+	var rutaFirma   = FIRMAS_ANALISTAS[data.saliente] || '';
+
+	if (rutaFirma && data.saliente) {
+		firmaImg.src    = rutaFirma;
+		firmaImg.alt    = 'Firma de ' + data.saliente;
+		firmaImg.hidden = false;
+		firmaSinImg.hidden = true;
+	} else if (data.saliente) {
+		firmaImg.hidden    = true;
+		firmaSinImg.hidden = false;
+	} else {
+		firmaImg.hidden    = true;
+		firmaSinImg.hidden = true;
+	}
+
+	modal.hidden = false;
+	document.body.style.overflow = 'hidden';
+	/* Focus accesible en el campo Para */
+	setTimeout(function () {
+		var para = document.getElementById('emailPara');
+		if (para) para.focus();
+	}, 80);
+}
+
+/* Cierra el modal */
+function cerrarModalEmail() {
+	var modal = document.getElementById('emailModal');
+	if (modal) modal.hidden = true;
+	document.body.style.overflow = '';
+}
+
+/* Abre mailto: con todos los campos rellenados */
+function enviarEmailOutlook() {
+	var para    = (document.getElementById('emailPara')   || {}).value || '';
+	var cc      = (document.getElementById('emailCC')     || {}).value || '';
+	var asunto  = (document.getElementById('emailAsunto') || {}).value || '';
+	var cuerpo  = (document.getElementById('emailCuerpo') || {}).value || '';
+	/* Limpiar CC: convertir ; o coma en separador mailto (,) */
+	var ccClean = cc.split(/[;,]/).map(function (s) { return s.trim(); }).filter(Boolean).join(',');
+
+	var mailto = 'mailto:' + encodeURIComponent(para);
+	var params = [];
+	if (ccClean) params.push('cc='      + encodeURIComponent(ccClean));
+	if (asunto)  params.push('subject=' + encodeURIComponent(asunto));
+	if (cuerpo)  params.push('body='    + encodeURIComponent(cuerpo));
+	if (params.length) mailto += '?' + params.join('&');
+	/* Abrir en el cliente de correo predeterminado (Outlook).
+	   Usar <a> temporal en lugar de window.location.href para no
+	   matar la aplicación en móvil ni en Safari. */
+	var a = document.createElement('a');
+	a.href = mailto;
+	a.style.display = 'none';
+	document.body.appendChild(a);
+	a.click();
+	setTimeout(function () { a.remove(); }, 200);
+	/* Cerrar modal */
+	setTimeout(cerrarModalEmail, 400);
+}
+
+/* Los listeners del modal de email se inicializan en initBotones() — ver arriba. */
