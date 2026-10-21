@@ -8,17 +8,17 @@ Sistema digital de registro y entrega de turnos para el equipo de Mesa de Ayuda 
 
 ```
 Project/
-├── index.html          # Aplicación principal (326 líneas)
-├── script.js           # Lógica completa (2 283 líneas)
-├── styles.css          # Estilos + print + responsive (2 417 líneas)
-└── img/                # Firmas de los analistas
-    ├── firma_juan_camilo_henao.png
-    ├── firma_juan_diego_mazo.png
-    ├── firma_juan_jose_santana.png
-    ├── firma_juan_pablo_gaviria.png
-    ├── firma_kevin_mosquera.png
-    ├── firma_william_jarava.png
-    └── firma_yin_martinez.png
+├── index.html          # Aplicación principal
+├── script.js           # Lógica completa
+├── styles.css          # Estilos + print + responsive
+└── img/                # Firmas de correo de los analistas
+    ├── firma_correo_johan_ossa.png
+    ├── firma_correo_juan_camilo_henao.png
+    ├── firma_correo_juan_diego_mazo.png
+    ├── firma_correo_juan_jose_santana.png
+    ├── firma_correo_juan_pablo_gaviria.png
+    ├── firma_correo_kevin_mosquera.png
+    └── firma_correo_william_jarava.png
 ```
 
 ---
@@ -65,10 +65,12 @@ Selector visual con "pill" interactivo. Al cambiar el turno se actualizan autom�
 
 Ambas se crean al seleccionar turno, no se pueden eliminar y se sincronizan con el horario activo.
 
-| Ticket | Rol | Posición |
-|--------|-----|----------|
-| **R-000001** | Inicio de turno — atención telefónica y en sitio | Siempre primera |
-| **R-000000** | Entrega de turno — consolidación de informes | Siempre última |
+| Ticket | Rol | Posición | Imágenes |
+|--------|-----|----------|----------|
+| **R-000001** | Inicio de turno — atención telefónica y en sitio | Siempre primera | Opcionales |
+| **R-000000** | Entrega de turno — consolidación de informes | Siempre última | No aplica |
+
+**R-000001** cuenta con zona de imágenes completa (Galería, Cámara, Drag & Drop) para adjuntar evidencia del inicio de turno. Las imágenes son opcionales y no bloquean la impresión.
 
 ---
 
@@ -90,6 +92,8 @@ https://hgmdesk.hgm.gov.co/pages/UI.php?operation=details&class=UserRequest&id=X
 ---
 
 ### 4. Gestión de Imágenes y Videos
+
+Disponible en tareas realizadas, tareas pendientes y en la tarea automática R-000001.
 
 #### Formas de adjuntar
 | Método | Descripción |
@@ -158,13 +162,13 @@ Selectores de analista entrante y saliente. Al seleccionar un nombre, el campo d
 
 | Analista | Cédula |
 |----------|--------|
+| Johan Sebastián Ossa Ramirez | 1045019101 |
 | Juan Camilo Henao Jiménez | 1001137159 |
 | Juan Diego Mazo Lezcano | 1020110871 |
 | Juan José Santana Garzón | 1022142959 |
 | Juan Pablo Gaviria Correa | 1152464110 |
 | Kevin Daniel Mosquera Cordoba | 1076819340 |
 | William David Jarava Solano | 1104410026 |
-| Yin Carlos Martinez Perez | 72203802 |
 
 ---
 
@@ -206,11 +210,11 @@ Selectores de analista entrante y saliente. Al seleccionar un nombre, el campo d
 | CC | Coordinadores (editable) |
 | Asunto | `Se Hace La Respectiva Entrega De Turno Del Día DD/MM/AAAA` |
 | Mensaje | Plantilla oficial con turno y nombre del analista saliente |
-| Firma | Imagen de `img/firma_[analista].png` según el analista saliente |
+| Firma | Imagen de `img/firma_correo_[analista].png` según el analista saliente |
 
 Al confirmar se abre Outlook con todos los campos pre-rellenados mediante `mailto:`. No requiere servidor ni configuración adicional.
 
-**Para agregar o actualizar una firma:** reemplazar el archivo `img/firma_[nombre].png` con la imagen correspondiente (PNG, fondo blanco, ~700 px de ancho).
+**Para agregar o actualizar una firma de correo:** colocar el archivo `img/firma_correo_[nombre].png` en la carpeta `img/` (PNG, fondo blanco, ~700 px de ancho).
 
 ---
 
@@ -223,7 +227,7 @@ Los datos sobreviven recargas, cierres de pestaña y reinicios del navegador.
 | Ciudad, fecha, turno, analistas | `localStorage` |
 | Texto de tareas, pendientes y captions | `localStorage` |
 | URLs de tickets | `localStorage` |
-| Imágenes y videos (data-URLs) | `IndexedDB` |
+| Imágenes y videos — todas las filas, incluida R-000001 | `IndexedDB` |
 
 **Auto-guardado:** 600 ms de debounce tras cada cambio. No requiere acción del usuario.  
 **Restauración:** automática al cargar la página.  
@@ -264,12 +268,13 @@ Los datos sobreviven recargas, cierres de pestaña y reinicios del navegador.
 ### Agregar un analista
 1. En `script.js`, agregar el objeto al array `ANALISTAS`:
    ```js
-   { nombre: 'Nombre Completo', cedula: '123456789' }
+   { nombre: 'Nombre Completo', cedula: '123456789', firma: 'Firma_Nombre_A' }
    ```
-2. Agregar la imagen de firma en `img/firma_nombre_apellido.png`.
-3. En `script.js`, agregar la entrada al objeto `FIRMAS_ANALISTAS`:
+2. En `index.html`, agregar `<option>` en los dos `<select>` de Responsables (`entranteNombre` y `salienteNombre`).
+3. Colocar la imagen de firma en `img/firma_correo_nombre_apellido.png`.
+4. En `script.js`, agregar la entrada al objeto `FIRMAS_ANALISTAS`:
    ```js
-   'Nombre Completo': 'img/firma_nombre_apellido.png'
+   'Nombre Completo': 'img/firma_correo_nombre_apellido.png'
    ```
 
 ### Agregar una actividad al catálogo
@@ -321,3 +326,4 @@ var DUR_30M = 30 * 60 * 1000;        // Fase 2: 30 minutos
 | 18 | `_restaurarEstado()` no creaba tarea maestra R-000000 antes de restaurar tareas manuales |
 | 19 | Listeners duplicados en `fechaInput` y `ciudadInput` por llamadas múltiples a `initFecha()` |
 | 20 | `_crearThumb` dead code (~45 líneas) eliminada |
+| 21 | `_guardarMediaIDB` excluía R-000001 → imágenes de inicio de turno no se persistían |
