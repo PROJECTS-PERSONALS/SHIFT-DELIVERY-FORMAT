@@ -23,13 +23,13 @@ function _activarAutoResize(textarea) {
 
 /* DATOS DE PERSONAL */
 var ANALISTAS = [
-	{ nombre: 'Juan Camilo Henao Jiménez', cedula: '1001137159' },
-	{ nombre: 'Juan Diego Mazo Lezcano', cedula: '1020110871' },
-	{ nombre: 'Juan José Santana Garzón', cedula: '1022142959' },
-	{ nombre: 'Juan Pablo Gaviria Correa', cedula: '1152464110' },
-	{ nombre: 'Kevin Daniel Mosquera Cordoba', cedula: '1076819340' },
-	{ nombre: 'William David Jarava Solano', cedula: '1104410026' },
-	{ nombre: 'Yin Carlos Martinez Perez', cedula: '72203802' }
+	{ nombre: 'Johan Sebastián Ossa Ramirez',  cedula: '1045019101', firma: 'Firma_Johan_S' },
+	{ nombre: 'Juan Camilo Henao Jiménez',      cedula: '1001137159', firma: 'Firma_Juan_C' },
+	{ nombre: 'Juan Diego Mazo Lezcano',        cedula: '1020110871', firma: 'Firma_Juan_D' },
+	{ nombre: 'Juan José Santana Garzón',       cedula: '1022142959', firma: 'Firma_Juan_J' },
+	{ nombre: 'Juan Pablo Gaviria Correa',      cedula: '1152464110', firma: 'Firma_Juan_P' },
+	{ nombre: 'Kevin Daniel Mosquera Cordoba',  cedula: '1076819340', firma: 'Firma_Kevin_D' },
+	{ nombre: 'William David Jarava Solano',    cedula: '1104410026', firma: 'Firma_William_D' }
 ];
 
 /* IDs reservados para tareas fijas */
@@ -194,7 +194,7 @@ function nextIdPendiente() { return ++_idPendiente; }
 /* TAREA AUTOMÁTICA DE INICIO DE TURNO (primera) */
 /**
  * Inserta (o actualiza si ya existe) la fila de tarea de turno obligatoria.
- * Esta fila no tiene zona de imágenes y no puede eliminarse.
+ * Incluye zona de imágenes para adjuntar evidencia del inicio de turno.
  * @param {string} turno  Valor del turno seleccionado (ej. "6:00 am - 2:00 pm")
  */
 function _insertarOActualizarTareaTurno(turno) {
@@ -213,6 +213,8 @@ function _insertarOActualizarTareaTurno(turno) {
 
 	var partes = _parsearHorasTurno(turno);
 	var desc = 'Se brinda atención telefónica y en sitio de los incidentes y requerimientos que se fueron presentando durante el turno.';
+	/* ID especial para los elementos de la zona de imágenes de R-000001 */
+	var fotoId = 'turno-auto';
 
 	var fila = document.createElement('div');
 	fila.className = 'tarea-fila';
@@ -245,12 +247,45 @@ function _insertarOActualizarTareaTurno(turno) {
 			'<div class="t-cell">' +
 				'<span style="font-size:10px; color:var(--gris-400); font-style:italic; text-align:center;"> Tarea&nbsp;de&nbsp;turno </span>' +
 			'</div>' +
+		'</div>' +
+		/* Zona de imágenes para R-000001 */
+		'<div class="tarea-fotos-row" id="fotosRow-' + fotoId + '">' +
+			'<span class="fotos-indicador" id="fotosIndicador-' + fotoId + '">' + svgFotoIcono() + '<span> Sin imágenes adjuntas </span>' + '</span>' +
+			'<div class="url-imagen-wrap" id="urlWrap-' + fotoId + '">' +
+				'<label class="btn-cargar-pc btn-cargar-galeria" title="Seleccionar imagen o video desde tu equipo">' +
+					svgFotoIcono() +
+					'<span class="btn-cargar-texto-galeria"> Galería / Archivo </span>' +
+					'<input type="file" accept="image/*,video/*" multiple hidden onchange="cargarImagenArchivo(this,\'' + fotoId + '\')">' +
+				'</label>' +
+				'<label class="btn-cargar-pc btn-cargar-camara" title="Tomar foto o video con la cámara">' +
+					svgCamaraIcono() +
+					'<span> Cámara </span>' +
+					'<input type="file" accept="image/*,video/*" capture="environment" hidden onchange="cargarImagenArchivo(this,\'' + fotoId + '\')">' +
+				'</label>' +
+				'<div class="url-dimensiones" id="dims-' + fotoId + '" hidden>' +
+					'<label class="dims-label"> Anchura </label>' +
+					'<input type="number" class="dims-input" id="dimW-' + fotoId + '" min="40" max="800" step="1" aria-label="Anchura del thumbnail en píxeles" onchange="redimensionar(\'' + fotoId + '\')">' +
+					'<svg class="dims-lock-icon" viewBox="0 0 16 16" fill="none" aria-hidden="true" title="Relación de aspecto bloqueada">' +
+						'<rect x="3" y="7" width="10" height="8" rx="1.5" stroke="currentColor" stroke-width="1.4"/>' +
+						'<path d="M5 7V5a3 3 0 016 0v2" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>' +
+					'</svg>' +
+					'<label class="dims-label"> Altura </label>' +
+					'<input type="number" class="dims-input" id="dimH-' + fotoId + '" min="30" max="600" step="1" aria-label="Altura del thumbnail en píxeles" onchange="redimensionarDesdeAltura(\'' + fotoId + '\')">' +
+				'</div>' +
+				'<div class="url-error" id="urlError-' + fotoId + '" hidden>' + svgAlerta() +
+					'<span> No se pudo cargar la imagen. Verifica la URL o el archivo. </span>' +
+				'</div>' +
+			'</div>' +
+			'<div class="previews-grid" id="previews-' + fotoId + '"></div>' +
 		'</div>';
-	/* Sin zona de imágenes para esta tarea */
+
 	/* Insertar siempre como PRIMER elemento */
 	contenedor.insertBefore(fila, contenedor.firstChild);
 	/* Auto-resize en el textarea readonly de la tarea de turno */
 	fila.querySelectorAll('textarea').forEach(function (ta) { autoResize(ta); });
+	/* Activar drag & drop en la zona de fotos */
+	var fotosRowTurno = document.getElementById('fotosRow-' + fotoId);
+	_activarDropZoneTurno(fotosRowTurno, fotoId);
 }
 
 /* TAREA MAESTRA R-000000 "Entrega de turno" (última) */
@@ -617,6 +652,51 @@ function _activarDropZone(fotosRow, esPendiente, id) {
 		}
 	});
 
+	fotosRow.addEventListener('drop', function (e) {
+		e.preventDefault();
+		fotosRow.classList.remove('drag-over');
+		var files = Array.prototype.slice.call(e.dataTransfer.files);
+		if (!files.length) return;
+		var els = _getEls();
+		_procesarArchivos(files,
+			els.previews, els.indicador, els.dimsEl,
+			els.dimWEl, els.dimHEl, els.errorEl);
+	});
+}
+
+/**
+ * Versión de _activarDropZone para la tarea fija R-000001 (ID de texto).
+ * Usa el prefijo fijo 'turno-auto' para todos los elementos de la zona de fotos.
+ */
+function _activarDropZoneTurno(fotosRow, fotoId) {
+	if (!fotosRow || fotosRow.dataset.dropActivo) return;
+	fotosRow.dataset.dropActivo = '1';
+
+	function _getEls() {
+		return {
+			previews: document.getElementById('previews-' + fotoId),
+			indicador: document.getElementById('fotosIndicador-' + fotoId),
+			dimsEl: document.getElementById('dims-' + fotoId),
+			dimWEl: document.getElementById('dimW-' + fotoId),
+			dimHEl: document.getElementById('dimH-' + fotoId),
+			errorEl: document.getElementById('urlError-' + fotoId)
+		};
+	}
+
+	fotosRow.addEventListener('dragenter', function (e) {
+		e.preventDefault();
+		fotosRow.classList.add('drag-over');
+	});
+	fotosRow.addEventListener('dragover', function (e) {
+		e.preventDefault();
+		e.dataTransfer.dropEffect = 'copy';
+		fotosRow.classList.add('drag-over');
+	});
+	fotosRow.addEventListener('dragleave', function (e) {
+		if (!fotosRow.contains(e.relatedTarget)) {
+			fotosRow.classList.remove('drag-over');
+		}
+	});
 	fotosRow.addEventListener('drop', function (e) {
 		e.preventDefault();
 		fotosRow.classList.remove('drag-over');
@@ -1151,8 +1231,9 @@ var IDB = (function () {
 function _claveMedia(filaId, idx) { return filaId + ':' + idx; }
 /* Guarda todos los medios de todas las filas (tareas + pendientes) en IDB */
 function _guardarMediaIDB() {
+	/* Incluye R-000001 (data-turno-auto) porque ahora tiene zona de imágenes */
 	var filas = document.querySelectorAll(
-		'#listaTareas .tarea-fila:not([data-turno-auto]), #listaPendientes .pendiente-fila'
+		'#listaTareas .tarea-fila, #listaPendientes .pendiente-fila'
 	);
 	/* Primero borrar toda la media guardada y reescribir desde cero */
 	IDB.borrarTodo(function () {
@@ -1199,17 +1280,30 @@ function _restaurarMediaFila(filaId, cb) {
 
 /* Reconstruye un preview-item desde los datos guardados en IDB */
 function _restaurarPreviewItem(filaId, datos) {
-	/* Determinar si la fila es tarea o pendiente por el prefijo del ID */
-	var esPendiente = filaId.indexOf('pendiente-') === 0;
-	var prefijo = esPendiente ? 'p' : '';
-	var numId = filaId.replace(/^(tarea-|pendiente-)/, '');
+	var previews, indicador, dimsEl, dimWEl, dimHEl, errorEl;
 
-	var previews = document.getElementById(prefijo + 'previews-' + numId);
-	var indicador = document.getElementById(prefijo + 'fotosIndicador-' + numId);
-	var dimsEl = document.getElementById(prefijo + 'dims-' + numId);
-	var dimWEl = document.getElementById(prefijo + 'dimW-' + numId);
-	var dimHEl = document.getElementById(prefijo + 'dimH-' + numId);
-	var errorEl = document.getElementById(prefijo + 'urlError-' + numId);
+	/* Caso especial: fila de inicio de turno R-000001 */
+	if (filaId === ID_TAREA_TURNO) {
+		var fotoId = 'turno-auto';
+		previews  = document.getElementById('previews-'       + fotoId);
+		indicador = document.getElementById('fotosIndicador-' + fotoId);
+		dimsEl    = document.getElementById('dims-'           + fotoId);
+		dimWEl    = document.getElementById('dimW-'           + fotoId);
+		dimHEl    = document.getElementById('dimH-'           + fotoId);
+		errorEl   = document.getElementById('urlError-'       + fotoId);
+	} else {
+		/* Determinar si la fila es tarea o pendiente por el prefijo del ID */
+		var esPendiente = filaId.indexOf('pendiente-') === 0;
+		var prefijo = esPendiente ? 'p' : '';
+		var numId = filaId.replace(/^(tarea-|pendiente-)/, '');
+
+		previews  = document.getElementById(prefijo + 'previews-'       + numId);
+		indicador = document.getElementById(prefijo + 'fotosIndicador-' + numId);
+		dimsEl    = document.getElementById(prefijo + 'dims-'           + numId);
+		dimWEl    = document.getElementById(prefijo + 'dimW-'           + numId);
+		dimHEl    = document.getElementById(prefijo + 'dimH-'           + numId);
+		errorEl   = document.getElementById(prefijo + 'urlError-'       + numId);
+	}
 
 	if (!previews) return;
 
@@ -1320,6 +1414,8 @@ function _restaurarEstado() {
 			if (pill) pill.textContent = estado.turno;
 			/* Disparar tarea de turno, tarea maestra y panel de obligatorias */
 			_insertarOActualizarTareaTurno(estado.turno);
+			/* Restaurar imágenes de R-000001 desde IDB */
+			_restaurarMediaFila(ID_TAREA_TURNO);
 			_insertarOActualizarTareaMaestra(); /* crear R-000000 antes de restaurar tareas manuales */
 			_renderObligatorias(estado.turno);
 			_actualizarVisibilidadOpcionales(true);
@@ -1333,6 +1429,13 @@ function _restaurarEstado() {
 		if (cedulaEntrante) {
 			var analistaEntrante = ANALISTAS.find(function (a) { return a.nombre === estado.entrante; });
 			cedulaEntrante.value = analistaEntrante ? analistaEntrante.cedula : '';
+			/* Restaurar imagen de firma entrante */
+			var firmaEntranteEl = document.getElementById('firmaImgEntrante');
+			if (firmaEntranteEl && analistaEntrante && analistaEntrante.firma) {
+				firmaEntranteEl.src    = 'img/' + analistaEntrante.firma + '.png';
+				firmaEntranteEl.alt    = 'Firma de ' + analistaEntrante.nombre;
+				firmaEntranteEl.hidden = false;
+			}
 		}
 	}
 	var saliente = document.getElementById('salienteNombre');
@@ -1342,6 +1445,13 @@ function _restaurarEstado() {
 		if (cedulaSaliente) {
 			var analistaSaliente = ANALISTAS.find(function (a) { return a.nombre === estado.saliente; });
 			cedulaSaliente.value = analistaSaliente ? analistaSaliente.cedula : '';
+			/* Restaurar imagen de firma saliente */
+			var firmaSalienteEl = document.getElementById('firmaImgSaliente');
+			if (firmaSalienteEl && analistaSaliente && analistaSaliente.firma) {
+				firmaSalienteEl.src    = 'img/' + analistaSaliente.firma + '.png';
+				firmaSalienteEl.alt    = 'Firma de ' + analistaSaliente.nombre;
+				firmaSalienteEl.hidden = false;
+			}
 		}
 	}
 	/* Restaurar filas de tareas (no la automática, esa ya se creó arriba) */
@@ -1863,10 +1973,27 @@ function _bindAnalista(selectId, cedulaId) {
 	var cedula = document.getElementById(cedulaId);
 	if (!sel || !cedula) return;
 
+	/* Determina el id del <img> de firma según qué select se está vinculando */
+	var firmaImgId = selectId === 'entranteNombre' ? 'firmaImgEntrante' : 'firmaImgSaliente';
+
 	sel.addEventListener('change', function () {
 		var analista = ANALISTAS.find(function (a) { return a.nombre === sel.value; });
 		cedula.value = analista ? analista.cedula : '';
 		sel.classList.remove('campo-error');
+
+		/* Actualizar imagen de firma en la línea de responsables */
+		var firmaEl = document.getElementById(firmaImgId);
+		if (firmaEl) {
+			if (analista && analista.firma) {
+				firmaEl.src    = 'img/' + analista.firma + '.png';
+				firmaEl.alt    = 'Firma de ' + analista.nombre;
+				firmaEl.hidden = false;
+			} else {
+				firmaEl.src    = '';
+				firmaEl.alt    = '';
+				firmaEl.hidden = true;
+			}
+		}
 	});
 }
 
@@ -2161,13 +2288,13 @@ function svgAlerta() {
 
 /* Mapa analista archivo de firma en la carpeta img/ */
 var FIRMAS_ANALISTAS = {
-	'Juan Camilo Henao Jiménez': 'img/firma_juan_camilo_henao.png',
-	'Juan Diego Mazo Lezcano':'img/firma_juan_diego_mazo.png',
-	'Juan José Santana Garzón': 'img/firma_juan_jose_santana.png',
-	'Juan Pablo Gaviria Correa': 'img/firma_juan_pablo_gaviria.png',
-	'Kevin Daniel Mosquera Cordoba': 'img/firma_kevin_mosquera.png',
-	'William David Jarava Solano': 'img/firma_william_jarava.png',
-	'Yin Carlos Martinez Perez': 'img/firma_yin_martinez.png'
+	'Johan Sebastián Ossa Ramirez':  'img/firma_correo_johan_ossa.png',
+	'Juan Camilo Henao Jiménez':     'img/firma_correo_juan_camilo_henao.png',
+	'Juan Diego Mazo Lezcano':       'img/firma_correo_juan_diego_mazo.png',
+	'Juan José Santana Garzón':      'img/firma_correo_juan_jose_santana.png',
+	'Juan Pablo Gaviria Correa':     'img/firma_correo_juan_pablo_gaviria.png',
+	'Kevin Daniel Mosquera Cordoba': 'img/firma_correo_kevin_mosquera.png',
+	'William David Jarava Solano':   'img/firma_correo_william_jarava.png'
 };
 
 /* Devuelve un string con los datos actuales del formulario para el cuerpo del correo */
